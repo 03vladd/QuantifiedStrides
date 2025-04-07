@@ -4,19 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/environment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/daily_subjective.py" beforeDir="false" afterPath="$PROJECT_DIR$/daily_subjective.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/enviroment.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/injuries.py" beforeDir="false" afterPath="$PROJECT_DIR$/injuries.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nutrition.py" beforeDir="false" afterPath="$PROJECT_DIR$/nutrition.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sleep.py" beforeDir="false" afterPath="$PROJECT_DIR$/sleep.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workout.py" beforeDir="false" afterPath="$PROJECT_DIR$/workout.py" afterDir="false" />
-    </list>
+    <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

@@ -1,0 +1,132 @@
+@startuml
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class DailySubjective {
+   UserID: int
+   EntryDate: date
+   EnergyLevel: int
+   Mood: int
+   RPE: int
+   Soreness: int
+   EnoughFood: int
+   Recovery: int
+   Reflection: text
+   SubjectiveID: int
+}
+class EnvironmentData {
+   WorkoutID: int
+   RecordDateTime: datetime
+   Location: varchar(100)
+   Temperature: float
+   WindSpeed: float
+   WindDirection: varchar(50)
+   Humidity: float
+   Precipitation: float
+   TotalPollenIndex: float
+   UVIndex: float
+   SubjectiveNotes: text
+   GrassPollen: float
+   TreePollen: float
+   WeedPollen: float
+   GrassPollenRisk: varchar(20)
+   TreePollenRisk: varchar(20)
+   WeedPollenRisk: varchar(20)
+   PollenIndex: float
+   EnvID: int
+}
+class Injuries {
+   UserID: int
+   StartDate: date
+   EndDate: date
+   InjuryType: varchar(100)
+   Severity: varchar(50)
+   Notes: text
+   InjuryID: int
+}
+class NutritionLog {
+   UserID: int
+   IngestionTime: datetime
+   FoodType: varchar(200)
+   TotalCalories: int
+   MacrosCarbs: float
+   MacrosProtein: float
+   MacrosFat: float
+   Supplements: varchar(200)
+   NutritionID: int
+}
+class SleepSessions {
+   UserID: int
+   SleepDate: date
+   DurationMinutes: int
+   SleepScore: float
+   HRV: float
+   RHR: int
+   TimeInDeep: int
+   TimeInLight: int
+   TimeInRem: int
+   TimeAwake: int
+   AvgSleepStress: float
+   SleepScoreFeedback: varchar(100)
+   SleepScoreInsight: varchar(100)
+   OvernightHRV: float
+   HRVStatus: varchar(50)
+   BodyBatteryChange: int
+   SleepID: int
+}
+class Users {
+   Name: varchar(100)
+   DateOfBirth: date
+   UserID: int
+}
+class WorkoutMetrics {
+   WorkoutID: int
+   MetricTimestamp: datetime
+   HeartRate: int
+   Pace: float
+   Cadence: float
+   VerticalOscillation: float
+   VerticalRatio: float
+   GroundContactTime: float
+   Power: float
+   MetricID: int
+}
+class Workouts {
+   UserID: int
+   Sport: varchar(50)
+   StartTime: datetime
+   EndTime: datetime
+   WorkoutType: varchar(100)
+   CaloriesBurned: int
+   AvgHeartRate: int
+   MaxHeartRate: int
+   VO2MaxEstimate: float
+   LactateThresholdBpm: int
+   TimeInHRZone1: int
+   TimeInHRZone2: int
+   TimeInHRZone3: int
+   TimeInHRZone4: int
+   TimeInHRZone5: int
+   TrainingVolume: float
+   AvgVerticalOscillation: float
+   AvgGroundContactTime: float
+   AvgStrideLength: float
+   AvgVerticalRatio: float
+   AverageRunningCadence: float
+   MaxRunningCadence: float
+   Location: varchar(100)
+   WorkoutDate: date
+   IsIndoor: bit
+   WorkoutID: int
+}
+
+DailySubjective  -[#595959,plain]-^  Users           : "UserID"
+EnvironmentData  -[#595959,plain]-^  Workouts        : "WorkoutID"
+Injuries         -[#595959,plain]-^  Users           : "UserID"
+NutritionLog     -[#595959,plain]-^  Users           : "UserID"
+SleepSessions    -[#595959,plain]-^  Users           : "UserID"
+WorkoutMetrics   -[#595959,plain]-^  Workouts        : "WorkoutID"
+Workouts         -[#595959,plain]-^  Users           : "UserID"
+@enduml
