@@ -1,0 +1,128 @@
+# QuantifiedStrides Test Suite
+
+This test suite provides comprehensive testing for the QuantifiedStrides platform - a personal athlete data intelligence system designed to track, analyze, and visualize every aspect of training, sleep, recovery, and lifestyle.
+
+## Overview
+
+The test suite includes:
+
+1. **Unit Tests** - Testing individual components:
+   - Database connectivity and schema validation
+   - Script execution
+   - Config integrity
+   - API integration
+
+2. **Integration Tests** - Testing how components work together:
+   - End-to-end workflow
+   - Data flow between modules
+   - System orchestration
+
+## File Structure
+
+```
+tests/
+├── __init__.py
+├── test_suite.py          # Main unit tests
+├── integration_test.py    # Integration tests
+└── mock_helpers.py        # Mock objects and test data
+
+run_tests.py               # Test runner script
+```
+
+## Setting Up
+
+1. Place the test files in your QuantifiedStrides project directory
+2. Create a `tests` subdirectory if it doesn't exist
+3. Run the setup script to initialize the test environment
+
+```bash
+python run_tests.py
+```
+
+## Running Tests
+
+### Run all tests
+```bash
+python run_tests.py
+```
+
+### Run only unit tests
+```bash
+python run_tests.py --unit-only
+```
+
+### Run only integration tests
+```bash
+python run_tests.py --integration-only
+```
+
+### Run a specific test file
+```bash
+python run_tests.py --test-file test_suite.py
+```
+
+### Skip setup and run tests
+```bash
+python run_tests.py --skip-setup
+```
+
+### Enable verbose output
+```bash
+python run_tests.py --verbose
+```
+
+## Test Reports
+
+After running the tests, a report is generated in JSON format:
+- `test_report.json` - Contains test results with detailed metrics
+- `test_results.log` - Contains logs from test execution
+
+## Key Areas Tested
+
+The test suite evaluates:
+
+1. **Database Integration**
+   - Schema validation
+   - Data relationships
+   - Query execution
+
+2. **Script Functionality**
+   - Proper execution of all scripts
+   - Handling of errors and edge cases
+   - Script output validation
+
+3. **Data Collection**
+   - External API connections (Garmin, weather, pollen data)
+   - Data processing and transformation
+   - Data storage
+
+4. **System Integration**
+   - Main orchestration script functionality
+   - Cross-component data flow
+   - Error handling
+
+## Extending the Tests
+
+To add new tests:
+
+1. Create a new test file in the `tests` directory
+2. Follow the unittest framework pattern
+3. Import necessary components from the main application
+4. Use mock objects from `mock_helpers.py` when needed
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Check that your environment is properly set up
+2. Verify that all dependencies are installed
+3. Check the log files for detailed error messages
+4. Try running individual test files to isolate issues
+
+## Mock Testing vs. Real APIs
+
+By default, the tests use mock objects to simulate external APIs and database connections. This allows testing without actual credentials or network connections.
+
+If you want to test with real external services:
+1. Configure your `config.py` with valid credentials
+2. Modify the appropriate test files to use real connections instead of mocks
