@@ -17058,7 +17058,7 @@
     <table id="5603" parent="5584" name="Workouts">
       <CreatedTimestamp>2025-04-07.15:46:26.250</CreatedTimestamp>
       <DataRetentionPeriod>-1</DataRetentionPeriod>
-      <ModifiedTimestamp>2025-04-07.18:10:04.253</ModifiedTimestamp>
+      <ModifiedTimestamp>2025-04-07.22:32:10.873</ModifiedTimestamp>
       <ObjectId>1253579504</ObjectId>
       <LobDataSpaceId>0</LobDataSpaceId>
     </table>
@@ -17646,7 +17646,7 @@
       <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
-      <SequenceIdentity>1(1003)</SequenceIdentity>
+      <SequenceIdentity>1(1011)</SequenceIdentity>
     </column>
     <column id="5722" parent="5603" name="UserID">
       <DasType>int|0s</DasType>
@@ -17748,7 +17748,20 @@
       <NotNull>1</NotNull>
       <Position>25</Position>
     </column>
-    <foreign-key id="5746" parent="5603" name="FK_Workouts_Users">
+    <column id="5746" parent="5603" name="IsIndoor">
+      <DasType>bit|0s</DasType>
+      <Position>26</Position>
+      <DefaultConstraintId>2021582240</DefaultConstraintId>
+      <DefaultConstraintName>DF__Workouts__IsIndo__787EE5A0</DefaultConstraintName>
+    </column>
+    <default id="5747" parent="5603" name="DF__Workouts__IsIndo__787EE5A0">
+      <ColNames>IsIndoor</ColNames>
+      <DefaultExpression>0</DefaultExpression>
+      <ModifiedTimestamp>2025-04-07.22:29:04.780</ModifiedTimestamp>
+      <NameSurrogate>1</NameSurrogate>
+      <ObjectId>2021582240</ObjectId>
+    </default>
+    <foreign-key id="5748" parent="5603" name="FK_Workouts_Users">
       <ColNames>UserID</ColNames>
       <CreatedTimestamp>2025-04-07.15:46:26.257</CreatedTimestamp>
       <ModifiedTimestamp>2025-04-07.15:46:26.257</ModifiedTimestamp>
@@ -17757,7 +17770,7 @@
       <RefTableId>1221579390</RefTableId>
       <RefTableName>Users</RefTableName>
     </foreign-key>
-    <index id="5747" parent="5603" name="PK__Workouts__E1C42A214A784F00">
+    <index id="5749" parent="5603" name="PK__Workouts__E1C42A214A784F00">
       <Clustering>1</Clustering>
       <ColNames>WorkoutID</ColNames>
       <NameSurrogate>1</NameSurrogate>
@@ -17765,12 +17778,19 @@
       <Unique>1</Unique>
       <PartitionDataSpaceId>1</PartitionDataSpaceId>
     </index>
-    <index id="5748" parent="5603" name="IX_Workouts_WorkoutDate">
+    <index id="5750" parent="5603" name="IX_Workouts_WorkoutDate">
       <ColNames>WorkoutDate</ColNames>
       <Position>2</Position>
       <PartitionDataSpaceId>1</PartitionDataSpaceId>
     </index>
-    <key id="5749" parent="5603" name="PK__Workouts__E1C42A214A784F00">
+    <index id="5751" parent="5603" name="UX_Workouts_UserID_StartTime">
+      <ColNames>UserID
+StartTime</ColNames>
+      <Position>5</Position>
+      <Unique>1</Unique>
+      <PartitionDataSpaceId>1</PartitionDataSpaceId>
+    </index>
+    <key id="5752" parent="5603" name="PK__Workouts__E1C42A214A784F00">
       <CreatedTimestamp>2025-04-07.15:46:26.253</CreatedTimestamp>
       <ModifiedTimestamp>2025-04-07.15:46:26.253</ModifiedTimestamp>
       <NameSurrogate>1</NameSurrogate>
@@ -17778,40 +17798,50 @@
       <Primary>1</Primary>
       <UnderlyingIndexName>PK__Workouts__E1C42A214A784F00</UnderlyingIndexName>
     </key>
-    <partition id="5750" parent="5637">
+    <key id="5753" parent="5603" name="UX_Workouts_UserID_StartTime">
+      <CreatedTimestamp>2025-04-07.22:32:10.870</CreatedTimestamp>
+      <ModifiedTimestamp>2025-04-07.22:32:10.870</ModifiedTimestamp>
+      <ObjectId>2069582411</ObjectId>
+      <UnderlyingIndexName>UX_Workouts_UserID_StartTime</UnderlyingIndexName>
+    </key>
+    <partition id="5754" parent="5637">
       <ObjectId>72057594046054400</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5751" parent="5659">
+    <partition id="5755" parent="5659">
       <ObjectId>72057594046185472</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5752" parent="5669">
+    <partition id="5756" parent="5669">
       <ObjectId>72057594046119936</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5753" parent="5681">
+    <partition id="5757" parent="5681">
       <ObjectId>72057594045988864</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5754" parent="5701">
+    <partition id="5758" parent="5701">
       <ObjectId>72057594045923328</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5755" parent="5706">
+    <partition id="5759" parent="5706">
       <ObjectId>72057594045726720</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5756" parent="5719">
+    <partition id="5760" parent="5719">
       <ObjectId>72057594045857792</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5757" parent="5747">
+    <partition id="5761" parent="5749">
       <ObjectId>72057594045792256</ObjectId>
       <Position>1</Position>
     </partition>
-    <partition id="5758" parent="5748">
+    <partition id="5762" parent="5750">
       <ObjectId>72057594046251008</ObjectId>
+      <Position>1</Position>
+    </partition>
+    <partition id="5763" parent="5751">
+      <ObjectId>72057594046644224</ObjectId>
       <Position>1</Position>
     </partition>
   </database-model>
