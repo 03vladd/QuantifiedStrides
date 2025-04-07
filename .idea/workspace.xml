@@ -5,7 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/injuries.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/daily_subjective.py" beforeDir="false" afterPath="$PROJECT_DIR$/daily_subjective.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,6 +40,7 @@
   "keyToString": {
     "Python.daily_subjective.executor": "Run",
     "Python.enviroment.executor": "Run",
+    "Python.injuries.executor": "Run",
     "Python.main.executor": "Run",
     "Python.nutrition.executor": "Run",
     "Python.sleep.executor": "Run",
@@ -62,7 +65,7 @@
     ]
   }
 }]]></component>
-  <component name="RunManager" selected="Python.injuries">
+  <component name="RunManager" selected="Python.main">
     <configuration name="daily_subjective" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="QuantifiedStrides" />
       <option name="ENV_FILES" value="" />
@@ -203,10 +206,10 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.daily_subjective" />
         <item itemvalue="Python.injuries" />
         <item itemvalue="Python.nutrition" />
         <item itemvalue="Python.enviroment" />
-        <item itemvalue="Python.daily_subjective" />
         <item itemvalue="Python.workout" />
       </list>
     </recent_temporary>
@@ -237,9 +240,10 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/QuantifiedStrides$sleep.coverage" NAME="sleep Coverage Results" MODIFIED="1744034297747" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$enviroment.coverage" NAME="enviroment Coverage Results" MODIFIED="1744035201967" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$main.coverage" NAME="main Coverage Results" MODIFIED="1744022745320" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$daily_subjective.coverage" NAME="daily_subjective Coverage Results" MODIFIED="1744034358476" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$daily_subjective.coverage" NAME="daily_subjective Coverage Results" MODIFIED="1744036857679" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$main.coverage" NAME="main Coverage Results" MODIFIED="1744036866666" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$workout.coverage" NAME="workout Coverage Results" MODIFIED="1744034325082" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$nutrition.coverage" NAME="nutrition Coverage Results" MODIFIED="1744035537354" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$injuries.coverage" NAME="injuries Coverage Results" MODIFIED="1744035757642" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$nutrition.coverage" NAME="nutrition Coverage Results" MODIFIED="1744035749119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
