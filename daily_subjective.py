@@ -32,46 +32,6 @@ if row:
     conn.commit()
     print("Previous entry deleted. Please enter new values.")
 
-# 4) Get workout ID for today if exists
-workout_id = None
-cursor.execute("SELECT WorkoutID FROM Workouts WHERE WorkoutDate = ?", (today,))
-row = cursor.fetchone()
-if row:
-    workout_id = row[0]
-    print(f"Found workout for today with ID: {workout_id}")
-else:
-    print("No workout found for today. Creating a reference workout...")
-    # Create a placeholder workout for reference
-    placeholder_sql = """
-    INSERT INTO Workouts (
-        UserID, Sport, StartTime, EndTime, WorkoutType, 
-        CaloriesBurned, AvgHeartRate, MaxHeartRate, 
-        TrainingVolume, Location, WorkoutDate
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    """
-    current_time = datetime.now()
-    cursor.execute(
-        placeholder_sql,
-        (
-            1,  # UserID
-            "rest",  # Sport
-            current_time,  # StartTime
-            current_time,  # EndTime
-            "Rest Day",  # WorkoutType
-            0,  # CaloriesBurned
-            0,  # AvgHeartRate
-            0,  # MaxHeartRate
-            0,  # TrainingVolume
-            "Home",  # Location
-            today  # WorkoutDate
-        )
-    )
-    conn.commit()
-
-    cursor.execute("SELECT SCOPE_IDENTITY()")
-    workout_id = cursor.fetchone()[0]
-    print(f"Created placeholder workout with ID: {workout_id}")
-
 # 5) Collect subjective data from user
 print("\n--- Daily Subjective Data Entry ---")
 print("Rate the following from 1-10 (or leave blank for null)")
@@ -95,9 +55,9 @@ def get_int_input(prompt, min_val=1, max_val=10):
 
 energy_level = get_int_input("Energy Level")
 mood = get_int_input("Mood")
-hrv = get_int_input("HRV")
+rpe = get_int_input("RPE (Rate of Perceived Exertion)")
 soreness = get_int_input("Soreness")
-sleep_rating = get_int_input("Sleep Quality")
+enough_food = get_int_input("Enough Food (1-10, where 10 is completely satisfied)")
 recovery = get_int_input("Recovery")
 reflection = input("Reflection (any additional notes): ")
 
@@ -108,8 +68,9 @@ INSERT INTO DailySubjective (
     EntryDate,
     EnergyLevel,
     Mood,
+    RPE,
     Soreness,
-    SleepQuality,
+    EnoughFood,
     Recovery,
     Reflection
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -122,9 +83,9 @@ cursor.execute(
         today,
         energy_level,
         mood,
-        hrv,
+        rpe,
         soreness,
-        sleep_rating,
+        enough_food,
         recovery,
         reflection
     )

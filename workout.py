@@ -11,8 +11,6 @@ client.login()
 # 2) Get recent activities
 activities = client.get_activities(0, 1)  # from index 0, 1 activity
 
-'''print(json.dumps(activities, indent=4))'''
-
 # 3) Connect to SQL Server
 conn = pyodbc.connect(
     "Driver={ODBC Driver 17 for SQL Server};"
@@ -25,7 +23,7 @@ print("Cursor connected")
 
 sql_insert = """
 INSERT INTO Workouts (
-      UserID
+    UserID
     , Sport
     , StartTime
     , EndTime
@@ -138,14 +136,9 @@ for activity in activities:
             avg_running_cadence,
             max_running_cadence,
             location,
-            workout_date  # New date column
+            workout_date
         )
     )
-
-    # 6) After saving workout, get the latest workoutID to link with environment data
-    cursor.execute("SELECT SCOPE_IDENTITY()")
-    workout_id = cursor.fetchone()[0]
-    print(f"Workout saved with ID: {workout_id} for date: {workout_date}")
 
 conn.commit()
 cursor.close()

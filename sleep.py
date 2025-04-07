@@ -18,17 +18,13 @@ cursor = conn.cursor()
 print("Cursor connected")
 
 today_date_str = datetime.today().strftime("%Y-%m-%d")
-print(today_date_str)
-
-'''week_ago = today - timedelta(days=7)'''
+print(f"Fetching sleep data for: {today_date_str}")
 
 sleep_data = client.get_sleep_data(today_date_str)
 
-'''print(json.dumps(sleep_data, indent=4))'''
-
 sql_insert = """
 INSERT INTO SleepSessions (
-        UserID
+    UserID
     , SleepDate
     , DurationMinutes
     , SleepScore
@@ -48,8 +44,7 @@ INSERT INTO SleepSessions (
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 """
 
-# 6) Extract the data from the returned JSON/dict
-#    The actual keys may differ — check print(sleep_data) to be sure.
+# Extract the data from the returned JSON/dict
 user_id = 1  # assuming just one user
 
 deep_sleep_sec = sleep_data.get("deepSleepSeconds", 0)
@@ -67,14 +62,15 @@ rhr = sleep_data.get("restingHeartRate", None)
 avg_stress = sleep_data.get("avgSleepStress", None)
 feedback = sleep_data.get("sleepScoreFeedback", "")
 insight = sleep_data.get("sleepScoreInsight", "")
+overnight_hrv = sleep_data.get("avgOvernightHrv", None)  # Same as HRV above
 hrv_status = sleep_data.get("hrvStatus", "")
 battery_change = sleep_data.get("bodyBatteryChange", None)
 
 today_date = datetime.strptime(today_date_str, "%Y-%m-%d").date()
 
-# 8. Execute the INSERT (assuming user ID = 1)
+# Execute the INSERT
 cursor.execute(sql_insert, (
-    1,  # UserID
+    user_id,
     today_date,
     duration_minutes,
     float(sleep_score) if sleep_score else None,
@@ -87,7 +83,7 @@ cursor.execute(sql_insert, (
     float(avg_stress) if avg_stress else None,
     feedback,
     insight,
-    float(hrv) if hrv else None,  # same as HRV above, or separate if you want
+    float(overnight_hrv) if overnight_hrv else None,
     hrv_status,
     int(battery_change) if battery_change else None
 ))
@@ -96,4 +92,4 @@ conn.commit()
 cursor.close()
 conn.close()
 
-print(f"Inserted today's sleep data for {today_date_str} successfully!")
+print(f"Inserted sleep data for {today_date_str} successfully!")

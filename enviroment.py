@@ -21,7 +21,7 @@ print("Cursor connected")
 today = datetime.now().date()
 print(f"Collecting environmental data for: {today}")
 
-# 3) ALWAYS create a workout for today if one doesn't exist
+# 3) Find or create a workout for today
 workout_id = None  # Initialize to None
 
 try:
@@ -95,8 +95,27 @@ pollen_headers = {
     "x-api-key": AMBEE_API_KEY,
     "Content-type": "application/json"
 }
-pollen_response = requests.get(pollen_url, headers=pollen_headers)
-pollen_data = pollen_response.json()
+
+# Initialize default pollen data
+pollen_data = {"data": [{}]}
+try:
+    pollen_response = requests.get(pollen_url, headers=pollen_headers, timeout=10)
+    print(f"Pollen API status code: {pollen_response.status_code}")
+    print(f"Pollen API raw response: {pollen_response.text}")
+
+    if pollen_response.status_code == 200:
+        try:
+            pollen_data = pollen_response.json()
+            print(f"Parsed pollen data: {pollen_data}")
+            print("Successfully retrieved pollen data from API")
+        except json.JSONDecodeError as json_err:
+            print(f"Error decoding JSON from pollen API: {json_err}")
+            print(f"Response content type: {pollen_response.headers.get('Content-Type', 'unknown')}")
+    else:
+        print(f"Failed to get pollen data. Status code: {pollen_response.status_code}")
+        print(f"Response: {pollen_response.text[:200]}...")  # Print first 200 chars of response
+except Exception as e:
+    print(f"Error getting pollen data: {e}")
 
 # 8) Extract the needed data
 # Location from weather data
@@ -118,18 +137,89 @@ precipitation = weather_data.get("rain", {}).get("1h", 0) if "rain" in weather_d
 # Get UV index from one call API
 uv_index = uv_data.get("current", {}).get("uvi", 0)
 
-# Get pollen data - calculate average from the three main types
+
+# Function to assess risk level based on pollen counts
+def get_risk_level(count):
+    if count < 10:
+        return "Low"
+    elif count < 30:
+        return "Moderate"
+    else:
+        return "High"
+
+
+# Get detailed pollen data from Ambee
 pollen_values = pollen_data.get("data", [{}])[0]
-pollen_index = (
-                       pollen_values.get("grass_pollen", 0) +
-                       pollen_values.get("tree_pollen", 0) +
-                       pollen_values.get("weed_pollen", 0)
-               ) / 3  # Simple average of the three main pollen types
+
+# Check if we have actual pollen data
+has_pollen_data = bool(pollen_values)
+if not has_pollen_data:
+    print("Warning: Using default/fallback values for pollen data")
+
+# Extract pollen counts and risk levels from the correct structure
+count_data = pollen_values.get("Count", {})
+risk_data = pollen_values.get("Risk", {})
+
+# Extract specific pollen types from Count data
+grass_pollen = count_data.get("grass_pollen", 0)
+tree_pollen = count_data.get("tree_pollen", 0)
+weed_pollen = count_data.get("weed_pollen", 0)
+
+# Get risk levels directly from API if available, otherwise calculate
+grass_pollen_risk = risk_data.get("grass_pollen", get_risk_level(grass_pollen))
+tree_pollen_risk = risk_data.get("tree_pollen", get_risk_level(tree_pollen))
+weed_pollen_risk = risk_data.get("weed_pollen", get_risk_level(weed_pollen))
+
+# If everything returned 0, we might need an alternative data source
+if (grass_pollen == 0 and tree_pollen == 0 and weed_pollen == 0) and not any(risk_data.values()):
+    # Only use fallbacks if both counts AND risk levels are missing/zero
+    current_month = datetime.now().month
+    # Simple seasonal pattern (Northern Hemisphere)
+    if 3 <= current_month <= 5:  # Spring: tree pollen high
+        tree_pollen = 25
+        grass_pollen = 10
+        weed_pollen = 5
+    elif 6 <= current_month <= 8:  # Summer: grass pollen high
+        tree_pollen = 5
+        grass_pollen = 30
+        weed_pollen = 15
+    elif 9 <= current_month <= 11:  # Fall: weed pollen high
+        tree_pollen = 2
+        grass_pollen = 5
+        weed_pollen = 25
+    else:  # Winter: all low
+        tree_pollen = 2
+        grass_pollen = 2
+        weed_pollen = 2
+
+    grass_pollen_risk = get_risk_level(grass_pollen)
+    tree_pollen_risk = get_risk_level(tree_pollen)
+    weed_pollen_risk = get_risk_level(weed_pollen)
+    print(f"Using seasonal estimates for pollen data (Month: {current_month})")
+else:
+    print(f"Using actual pollen data from API: Grass={grass_pollen}, Tree={tree_pollen}, Weed={weed_pollen}")
+
+# Calculate total pollen index (average)
+total_pollen_index = (grass_pollen + tree_pollen + weed_pollen) / 3
+
+# Final pollen index (same as total_pollen_index for now)
+pollen_index = total_pollen_index
 
 # Current time
 record_date_time = datetime.now()
 
 # 9) Create SQL insert statement
+# First, let's check the actual schema of the EnvironmentData table
+try:
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'EnvironmentData' ORDER BY ORDINAL_POSITION")
+    columns = [row[0] for row in cursor.fetchall()]
+    print("Actual EnvironmentData columns:", columns)
+except Exception as e:
+    print(f"Error reading table schema: {e}")
+    # If we can't read the schema, proceed with a more conservative approach
+
+# Create SQL insert that matches the actual columns
 sql_insert = """
 INSERT INTO EnvironmentData (
     WorkoutID,
@@ -140,10 +230,17 @@ INSERT INTO EnvironmentData (
     WindDirection,
     Humidity,
     Precipitation,
-    PollenIndex,
+    TotalPollenIndex,
     UVIndex,
-    SubjectiveNotes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    SubjectiveNotes,
+    GrassPollen,
+    TreePollen,
+    WeedPollen,
+    GrassPollenRisk,
+    TreePollenRisk,
+    WeedPollenRisk,
+    PollenIndex
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 """
 
 # 10) Execute insert with current values - ONLY if we have a valid workout_id
@@ -163,11 +260,20 @@ try:
             wind_direction,
             humidity,
             precipitation,
-            pollen_index,
+            total_pollen_index,
             uv_index,
-            "Daily environment check"  # Default note
+            "Daily environment check",  # Default note
+            grass_pollen,
+            tree_pollen,
+            weed_pollen,
+            grass_pollen_risk,
+            tree_pollen_risk,
+            weed_pollen_risk,
+            pollen_index
         )
     )
+
+    print("Successfully stored environmental data with detailed pollen information")
 
     conn.commit()
     print(f"Environmental data for {location} recorded successfully!")
@@ -175,7 +281,10 @@ try:
     print(f"Wind: {wind_speed} m/s, Direction: {wind_direction}°")
     print(f"Humidity: {humidity}%")
     print(f"Precipitation: {precipitation} mm")
-    print(f"Pollen Index: {pollen_index}")
+    print(f"Total Pollen Index: {total_pollen_index}")
+    print(f"Grass Pollen: {grass_pollen} ({grass_pollen_risk})")
+    print(f"Tree Pollen: {tree_pollen} ({tree_pollen_risk})")
+    print(f"Weed Pollen: {weed_pollen} ({weed_pollen_risk})")
     print(f"UV Index: {uv_index}")
 
 except Exception as e:
