@@ -527,6 +527,9 @@ def main():
                 pass
         return 1
 
+sleepdata = get_sleep_data(client=connect_to_garmin(), date_str="2025-04-08")
+print("Raw sleep data from Garmin:")
+print(json.dumps(sleepdata, indent=2))
 
 if __name__ == "__main__":
     exit(main())

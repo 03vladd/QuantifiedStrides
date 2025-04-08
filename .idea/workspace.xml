@@ -6,11 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1/storage_v2/_src_/database/QuantifiedStridesDB.UBKciA/schema/dbo.sYMBAA.zip" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1/storage_v2/_src_/database/QuantifiedStridesDB.UBKciA/schema/dbo.sYMBAA.zip" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sleep.py" beforeDir="false" afterPath="$PROJECT_DIR$/sleep.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/integration-test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/integration_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test-suite.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_suite.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/workout.py" beforeDir="false" afterPath="$PROJECT_DIR$/workout.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -40,64 +37,41 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python tests.Python tests in integration-test.py.executor": "Run",
-    "Python tests.Python tests in integration_test.py.executor": "Run",
-    "Python tests.Python tests in test_suite.py.executor": "Run",
-    "Python.daily_subjective.executor": "Run",
-    "Python.enviroment.executor": "Run",
-    "Python.injuries.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.nutrition.executor": "Run",
-    "Python.run_tests.executor": "Run",
-    "Python.sleep.executor": "Run",
-    "Python.workout.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/vasiu/UBB/Info/QuantifiedStrides",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python tests.Python tests in integration-test.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in integration_test.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_suite.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python.daily_subjective.executor&quot;: &quot;Run&quot;,
+    &quot;Python.enviroment.executor&quot;: &quot;Run&quot;,
+    &quot;Python.injuries.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.nutrition.executor&quot;: &quot;Run&quot;,
+    &quot;Python.run_tests.executor&quot;: &quot;Run&quot;,
+    &quot;Python.sleep.executor&quot;: &quot;Run&quot;,
+    &quot;Python.workout.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/vasiu/UBB/Info/QuantifiedStrides&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "sqlserver"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;sqlserver&quot;
     ],
-    "com.intellij.ide.scratch.LRUPopupBuilder$1/SQL Dialect": [
-      "TSQL"
+    &quot;com.intellij.ide.scratch.LRUPopupBuilder$1/SQL Dialect&quot;: [
+      &quot;TSQL&quot;
     ]
   }
-}]]></component>
-  <component name="RunManager" selected="Python.sleep">
-    <configuration name="daily_subjective" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="QuantifiedStrides" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/daily_subjective.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+}</component>
+  <component name="RunManager" selected="Python.workout">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="QuantifiedStrides" />
       <option name="ENV_FILES" value="" />
@@ -167,6 +141,29 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="workout" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="QuantifiedStrides" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/workout.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests in integration_test.py" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="QuantifiedStrides" />
       <option name="ENV_FILES" value="" />
@@ -201,11 +198,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.workout" />
         <item itemvalue="Python.sleep" />
         <item itemvalue="Python tests.Python tests in test_suite.py" />
         <item itemvalue="Python tests.Python tests in integration_test.py" />
         <item itemvalue="Python.run_tests" />
-        <item itemvalue="Python.daily_subjective" />
       </list>
     </recent_temporary>
   </component>
@@ -226,7 +223,9 @@
       <updated>1744017627358</updated>
       <workItem from="1744017638394" duration="6518000" />
       <workItem from="1744024980917" duration="4174000" />
-      <workItem from="1744101500408" duration="2262000" />
+      <workItem from="1744101500408" duration="2770000" />
+      <workItem from="1744107087262" duration="3812000" />
+      <workItem from="1744124547225" duration="2684000" />
     </task>
     <servers />
   </component>
@@ -235,12 +234,12 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/QuantifiedStrides$enviroment.coverage" NAME="enviroment Coverage Results" MODIFIED="1744035201967" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$sleep.coverage" NAME="sleep Coverage Results" MODIFIED="1744104002065" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$sleep.coverage" NAME="sleep Coverage Results" MODIFIED="1744107616380" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$daily_subjective.coverage" NAME="daily_subjective Coverage Results" MODIFIED="1744036857679" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$main.coverage" NAME="main Coverage Results" MODIFIED="1744049245841" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$run_tests.coverage" NAME="run_tests Coverage Results" MODIFIED="1744049268546" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$workout.coverage" NAME="workout Coverage Results" MODIFIED="1744034325082" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$injuries.coverage" NAME="injuries Coverage Results" MODIFIED="1744035757642" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$workout.coverage" NAME="workout Coverage Results" MODIFIED="1744126591632" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$nutrition.coverage" NAME="nutrition Coverage Results" MODIFIED="1744035749119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$.coverage" NAME=" Coverage Results" MODIFIED="1744102155469" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
   </component>
