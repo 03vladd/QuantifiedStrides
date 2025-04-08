@@ -102,7 +102,7 @@ class TestScriptExecution(unittest.TestCase):
         mock_run.return_value = mock_process
 
         from main import run_script
-        result = run_script('enviroment.py')  # Note: using actual filename with typo
+        result = run_script('environment.py')
         self.assertTrue(result)
         mock_run.assert_called_once()
 

@@ -119,7 +119,8 @@ def process_activity(activity):
         "max_running_cadence": activity.get("maxRunningCadenceInStepsPerMinute", None),
         "location": activity.get("locationName", "Unknown"),
         "workout_date": workout_date,
-        "is_indoor": is_indoor
+        "is_indoor": is_indoor,
+        "activity_id": activity.get("activityId", None)  # Store Garmin activityId for detailed metrics
     }
 
     return processed_data
@@ -216,7 +217,167 @@ def insert_workout(cursor, data):
         )
 
     cursor.execute(sql_insert, params)
-    return cursor.rowcount
+
+    # Get the ID of the inserted workout
+    cursor.execute("SELECT @@IDENTITY")
+    workout_id = cursor.fetchone()[0]
+
+    return workout_id
+
+
+def get_detailed_workout_metrics(client, activity_id):
+    """Get detailed metrics for an activity"""
+    logger.info(f"Fetching detailed metrics for activity ID: {activity_id}")
+
+    try:
+        # Get activity details with metrics
+        details = client.get_activity_details(activity_id)
+
+        # Get split data if available
+        try:
+            splits = client.get_activity_splits(activity_id)
+        except Exception as e:
+            logger.warning(f"Could not get splits for activity {activity_id}: {e}")
+            splits = []
+
+        # Get HR data if available
+        try:
+            hr_data = client.get_activity_hr_in_timezones(activity_id)
+        except Exception as e:
+            logger.warning(f"Could not get HR zones for activity {activity_id}: {e}")
+            hr_data = {}
+
+        # Combine all the data
+        return {
+            "details": details,
+            "splits": splits,
+            "hr_data": hr_data
+        }
+    except Exception as e:
+        logger.error(f"Error fetching detailed metrics for activity {activity_id}: {e}")
+        return {}
+
+
+def process_metric_points(detailed_metrics):
+    """Process and extract time-series data points from detailed metrics"""
+    processed_points = []
+
+    # Process activity details
+    details = detailed_metrics.get("details", {})
+    metrics = details.get("metrics", [])
+
+    # Find metrics with time-series data
+    for metric in metrics:
+        metric_type = metric.get("metricType", "")
+        metric_values = metric.get("metrics", [])
+
+        if not metric_values:
+            continue
+
+        # Process each metric point
+        for i, value in enumerate(metric_values):
+            # Make sure we have a timestamp
+            if "startTimeGMT" not in value:
+                continue
+
+            # Parse timestamp
+            try:
+                timestamp = datetime.strptime(value["startTimeGMT"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            except ValueError:
+                try:
+                    timestamp = datetime.strptime(value["startTimeGMT"], "%Y-%m-%dT%H:%M:%SZ")
+                except ValueError:
+                    logger.error(f"Could not parse timestamp: {value['startTimeGMT']}")
+                    continue
+
+            # If this is the first metric type, create a new point
+            if i >= len(processed_points):
+                processed_points.append({
+                    "timestamp": timestamp
+                })
+
+            # Add the metric value to the point
+            if metric_type == "HEART_RATE":
+                processed_points[i]["heart_rate"] = value.get("value")
+            elif metric_type == "SPEED":
+                processed_points[i]["pace"] = value.get("value")
+            elif metric_type == "CADENCE":
+                processed_points[i]["cadence"] = value.get("value")
+            elif metric_type == "VERTICAL_OSCILLATION":
+                processed_points[i]["vertical_oscillation"] = value.get("value")
+            elif metric_type == "GROUND_CONTACT_TIME":
+                processed_points[i]["ground_contact_time"] = value.get("value")
+            elif metric_type == "VERTICAL_RATIO":
+                processed_points[i]["vertical_ratio"] = value.get("value")
+            elif metric_type == "STRIDE_LENGTH":
+                processed_points[i]["stride_length"] = value.get("value")
+            elif metric_type == "POWER":
+                processed_points[i]["power"] = value.get("value")
+            elif metric_type == "ALTITUDE":
+                processed_points[i]["altitude"] = value.get("value")
+            elif metric_type == "TEMPERATURE":
+                processed_points[i]["temperature"] = value.get("value")
+
+    return processed_points
+
+
+def insert_workout_metrics(cursor, workout_id, metric_points):
+    """Insert detailed workout metrics into the database"""
+    if not metric_points:
+        logger.warning(f"No metric points to insert for workout ID: {workout_id}")
+        return 0
+
+    # Prepare batch insert
+    values = []
+    for point in metric_points:
+        # We always need a timestamp
+        if "timestamp" not in point:
+            continue
+
+        # Extract values with defaults for missing metrics
+        timestamp = point.get("timestamp")
+        heart_rate = point.get("heart_rate")
+        pace = point.get("pace")
+        cadence = point.get("cadence")
+        vertical_oscillation = point.get("vertical_oscillation")
+        ground_contact_time = point.get("ground_contact_time")
+        vertical_ratio = point.get("vertical_ratio")
+        stride_length = point.get("stride_length")
+        power = point.get("power")
+        altitude = point.get("altitude")
+        temperature = point.get("temperature")
+
+        values.append((
+            workout_id, timestamp, heart_rate, pace, cadence,
+            vertical_oscillation, vertical_ratio, ground_contact_time,
+            power, altitude, temperature, stride_length
+        ))
+
+    # Use batch insert for better performance
+    try:
+        # Using transactions for better performance
+        rows_inserted = 0
+        batch_size = 1000  # Insert in batches of 1000
+
+        for i in range(0, len(values), batch_size):
+            batch = values[i:i + batch_size]
+
+            cursor.executemany("""
+                INSERT INTO WorkoutMetrics (
+                    WorkoutID, MetricTimestamp, HeartRate, Pace, Cadence, 
+                    VerticalOscillation, VerticalRatio, GroundContactTime,
+                    Power, Altitude, Temperature, StrideLength
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, batch)
+
+            rows_inserted += len(batch)
+            logger.info(f"Inserted batch of {len(batch)} metrics (total: {rows_inserted})")
+
+        return rows_inserted
+    except Exception as e:
+        logger.error(f"Error inserting workout metrics: {e}")
+        return 0
 
 
 def main():
@@ -237,6 +398,7 @@ def main():
 
         # Begin transaction
         activities_inserted = 0
+        metrics_inserted = 0
 
         for activity in activities:
             # Process the activity
@@ -246,22 +408,48 @@ def main():
             existing = check_existing_workout(cursor, processed_data["user_id"], processed_data["start_time"])
 
             if existing:
+                workout_id = existing[0]
                 logger.info(
-                    f"Workout at {processed_data['start_time']} already exists (ID: {existing[0]}). Skipping...")
-                continue
+                    f"Workout at {processed_data['start_time']} already exists (ID: {workout_id}). Checking for detailed metrics...")
 
-            # Insert the workout
-            inserted = insert_workout(cursor, processed_data)
-            if inserted:
-                activities_inserted += 1
-                logger.info(f"Inserted workout: {processed_data['workout_type']} on {processed_data['workout_date']}")
+                # Check if workout metrics already exist
+                cursor.execute("SELECT COUNT(*) FROM WorkoutMetrics WHERE WorkoutID = ?", (workout_id,))
+                metrics_count = cursor.fetchone()[0]
+
+                if metrics_count > 0:
+                    logger.info(f"Workout ID {workout_id} already has {metrics_count} metric points. Skipping...")
+                    continue
+            else:
+                # Insert the workout
+                workout_id = insert_workout(cursor, processed_data)
+                if workout_id:
+                    activities_inserted += 1
+                    logger.info(
+                        f"Inserted workout: {processed_data['workout_type']} on {processed_data['workout_date']} (ID: {workout_id})")
+                else:
+                    logger.error("Failed to insert workout")
+                    continue
+
+            # Get and process detailed metrics
+            activity_id = processed_data.get("activity_id")
+            if activity_id:
+                detailed_metrics = get_detailed_workout_metrics(client, activity_id)
+                metric_points = process_metric_points(detailed_metrics)
+
+                if metric_points:
+                    rows = insert_workout_metrics(cursor, workout_id, metric_points)
+                    metrics_inserted += rows
+                    logger.info(f"Inserted {rows} detailed metric points for workout ID {workout_id}")
+                else:
+                    logger.warning(f"No detailed metrics found for activity ID {activity_id}")
 
         # Commit and close
         conn.commit()
         cursor.close()
         conn.close()
 
-        print(f"All activities inserted successfully! ({activities_inserted} new activities)")
+        print(
+            f"All activities inserted successfully! ({activities_inserted} new activities, {metrics_inserted} metric points)")
         return 0
 
     except Exception as e:
