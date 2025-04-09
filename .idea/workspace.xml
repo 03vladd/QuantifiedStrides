@@ -224,7 +224,7 @@
       <workItem from="1744101500408" duration="2770000" />
       <workItem from="1744107087262" duration="3812000" />
       <workItem from="1744124547225" duration="2836000" />
-      <workItem from="1744196360340" duration="2288000" />
+      <workItem from="1744196360340" duration="3209000" />
     </task>
     <servers />
   </component>
@@ -238,7 +238,7 @@
     <SUITE FILE_PATH="coverage/QuantifiedStrides$main.coverage" NAME="main Coverage Results" MODIFIED="1744049245841" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$run_tests.coverage" NAME="run_tests Coverage Results" MODIFIED="1744049268546" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$injuries.coverage" NAME="injuries Coverage Results" MODIFIED="1744035757642" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/QuantifiedStrides$workout.coverage" NAME="workout Coverage Results" MODIFIED="1744198426032" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/QuantifiedStrides$workout.coverage" NAME="workout Coverage Results" MODIFIED="1744199129708" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$nutrition.coverage" NAME="nutrition Coverage Results" MODIFIED="1744035749119" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/QuantifiedStrides$.coverage" NAME=" Coverage Results" MODIFIED="1744102155469" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
   </component>
