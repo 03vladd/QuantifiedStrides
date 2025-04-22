@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
-import os
 import garminconnect
 import pyodbc
-import json
 import logging
 import sys
 import config
@@ -45,71 +43,6 @@ def check_existing_workout(cursor, user_id, start_time):
     except Exception as e:
         logger.error(f"Error checking for existing workout: {e}")
         return None
-
-
-def check_table_structure(cursor):
-    """Check if necessary tables exist and create them if they don't"""
-    try:
-        # Check for WorkoutRoutePoints table
-        cursor.execute("""
-            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WorkoutRoutePoints')
-            CREATE TABLE WorkoutRoutePoints (
-                RoutePointID INT PRIMARY KEY IDENTITY(1,1),
-                WorkoutID INT NOT NULL,
-                Timestamp DATETIME NOT NULL,
-                Latitude FLOAT,
-                Longitude FLOAT,
-                Altitude FLOAT,
-                Speed FLOAT,
-                CumulativeAscent FLOAT,
-                CumulativeDescent FLOAT,
-                DistanceFromPreviousPoint FLOAT,
-                DistanceInMeters FLOAT,
-                FOREIGN KEY (WorkoutID) REFERENCES Workouts(WorkoutID)
-            )
-        """)
-
-        # Check for WorkoutHeartRateZones table
-        cursor.execute("""
-            IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WorkoutHeartRateZones')
-            CREATE TABLE WorkoutHeartRateZones (
-                HRZoneID INT PRIMARY KEY IDENTITY(1,1),
-                WorkoutID INT NOT NULL,
-                ZoneNumber INT NOT NULL,
-                SecondsInZone FLOAT,
-                ZoneLowBoundary INT,
-                FOREIGN KEY (WorkoutID) REFERENCES Workouts(WorkoutID)
-            )
-        """)
-
-        # Check WorkoutMetrics table for required columns
-        required_columns = [
-            ("LapIndex", "INT"),
-            ("MessageIndex", "INT"),
-            ("Distance", "FLOAT"),
-            ("Duration", "FLOAT"),
-            ("StartLatitude", "FLOAT"),
-            ("StartLongitude", "FLOAT"),
-            ("EndLatitude", "FLOAT"),
-            ("EndLongitude", "FLOAT"),
-            ("ElevationGain", "FLOAT"),
-            ("ElevationLoss", "FLOAT"),
-            ("StrideLength", "FLOAT")
-        ]
-
-        for column_name, data_type in required_columns:
-            cursor.execute(f"""
-                IF NOT EXISTS (SELECT * FROM sys.columns 
-                              WHERE object_id = OBJECT_ID('WorkoutMetrics') AND name = '{column_name}')
-                ALTER TABLE WorkoutMetrics 
-                ADD {column_name} {data_type} NULL
-            """)
-
-        logger.info("Database structure verified and updated if needed")
-        return True
-    except Exception as e:
-        logger.error(f"Error checking table structure: {e}")
-        return False
 
 
 def is_indoor_workout(sport_type, workout_name=""):
@@ -291,333 +224,61 @@ def insert_workout(cursor, data):
         return None
 
 
-def get_detailed_workout_metrics(client, activity_id):
-    """Get detailed metrics for an activity"""
-    logger.info(f"Fetching detailed metrics for activity ID: {activity_id}")
-
+def get_detailed_metrics(client, activity_id):
+    """Get essential detailed metrics for an activity"""
     try:
-        # Get activity details with metrics (includes laps and splits)
+        # Get activity details with metrics
         details = {}
         try:
             details = client.get_activity_details(activity_id)
-            logger.info(f"Successfully retrieved activity details")
         except Exception as e:
             logger.warning(f"Could not get activity details: {e}")
-
-        # Get split data if available
-        splits = []
-        try:
-            splits = client.get_activity_splits(activity_id)
-            logger.info(f"Successfully retrieved {len(splits) if isinstance(splits, list) else '0'} splits")
-        except Exception as e:
-            logger.warning(f"Could not get splits for activity {activity_id}: {e}")
 
         # Get HR data if available
         hr_data = {}
         try:
             hr_data = client.get_activity_hr_in_timezones(activity_id)
-            logger.info(f"Successfully retrieved heart rate zone data")
         except Exception as e:
-            logger.warning(f"Could not get HR zones for activity {activity_id}: {e}")
+            logger.warning(f"Could not get HR zones: {e}")
 
-        # Get GPS route data if available - try different methods
-        gps_data = []
-        try:
-            # Try different methods that might exist
-            if hasattr(client, 'get_activity_route'):
-                gps_data = client.get_activity_route(activity_id)
-            elif hasattr(client, 'get_activity_gps_route'):
-                gps_data = client.get_activity_gps_route(activity_id)
-            elif hasattr(client, 'get_activity_gps'):
-                gps_data = client.get_activity_gps(activity_id)
-            else:
-                # Last resort: try to get from details
-                if details and isinstance(details, dict):
-                    gps_data = details.get('gpsData', [])
-
-            logger.info(f"Retrieved GPS data of type: {type(gps_data)}")
-        except Exception as e:
-            logger.warning(f"Could not get GPS route for activity {activity_id}: {e}")
-
-        # Ensure gps_data is a list
-        if isinstance(gps_data, dict):
-            # Try common dictionary structures
-            if 'points' in gps_data:
-                gps_data = gps_data.get('points', [])
-            elif 'gpsData' in gps_data:
-                gps_data = gps_data.get('gpsData', [])
-            else:
-                logger.warning(f"GPS data in unexpected dictionary format")
-                gps_data = []
-
-        # Combine all the data
         return {
             "details": details,
-            "splits": splits,
-            "hr_data": hr_data,
-            "gps_data": gps_data
+            "hr_data": hr_data
         }
     except Exception as e:
-        logger.error(f"Error fetching detailed metrics for activity {activity_id}: {e}")
-        return {
-            "details": {},
-            "splits": [],
-            "hr_data": {},
-            "gps_data": []
-        }
+        logger.error(f"Error fetching metrics: {e}")
+        return {"details": {}, "hr_data": {}}
 
 
-def process_metric_points(detailed_metrics):
-    """Process and extract time-series data points from detailed metrics"""
-    processed_points = []
+def extract_workout_metrics(details):
+    """Extract key metrics from activity details"""
+    metrics_points = []
 
     try:
-        # Process activity details
-        details = detailed_metrics.get("details", {})
-
-        # Process metrics from details
+        # Look for metrics in the details
+        metrics_list = []
         if isinstance(details, dict):
-            metrics_list = []
-
-            # Try different places where metrics might be found
             if "metrics" in details:
                 metrics_list = details.get("metrics", [])
             elif "activityMetrics" in details:
                 metrics_list = details.get("activityMetrics", [])
 
-            # Process each metric type
-            for metric in metrics_list:
-                if not isinstance(metric, dict):
-                    continue
-
-                metric_type = metric.get("metricType", "")
-                metric_values = metric.get("metrics", [])
-
-                if not metric_values:
-                    continue
-
-                # Process each data point for this metric
-                for value in metric_values:
-                    if not isinstance(value, dict) or "startTimeGMT" not in value:
-                        continue
-
-                    # Parse timestamp
-                    timestamp = None
-                    time_str = value.get("startTimeGMT", "")
-
-                    if time_str:
-                        for fmt in ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S"]:
-                            try:
-                                timestamp = datetime.strptime(time_str, fmt)
-                                break
-                            except ValueError:
-                                continue
-
-                    if not timestamp:
-                        continue
-
-                    # Look for existing point with this timestamp
-                    existing_point = None
-                    for point in processed_points:
-                        if point["timestamp"] == timestamp:
-                            existing_point = point
-                            break
-
-                    # Add or update point
-                    if existing_point:
-                        # Update existing point
-                        if metric_type == "HEART_RATE" and "value" in value:
-                            existing_point["heart_rate"] = value.get("value")
-                        elif metric_type == "SPEED" and "value" in value:
-                            existing_point["pace"] = value.get("value")
-                        elif metric_type == "CADENCE" and "value" in value:
-                            existing_point["cadence"] = value.get("value")
-                        elif metric_type == "VERTICAL_OSCILLATION" and "value" in value:
-                            existing_point["vertical_oscillation"] = value.get("value")
-                        elif metric_type == "GROUND_CONTACT_TIME" and "value" in value:
-                            existing_point["ground_contact_time"] = value.get("value")
-                        elif metric_type == "VERTICAL_RATIO" and "value" in value:
-                            existing_point["vertical_ratio"] = value.get("value")
-                        elif metric_type == "STRIDE_LENGTH" and "value" in value:
-                            existing_point["stride_length"] = value.get("value")
-                        elif metric_type == "POWER" and "value" in value:
-                            existing_point["power"] = value.get("value")
-                    else:
-                        # Create new point
-                        new_point = {
-                            "timestamp": timestamp,
-                            "heart_rate": None,
-                            "pace": None,
-                            "cadence": None,
-                            "vertical_oscillation": None,
-                            "vertical_ratio": None,
-                            "ground_contact_time": None,
-                            "stride_length": None,
-                            "power": None,
-                            "lap_index": None,
-                            "message_index": None,
-                            "distance": None,
-                            "duration": None,
-                            "start_latitude": None,
-                            "start_longitude": None,
-                            "end_latitude": None,
-                            "end_longitude": None,
-                            "elevation_gain": None,
-                            "elevation_loss": None
-                        }
-
-                        # Set the specific metric
-                        if metric_type == "HEART_RATE" and "value" in value:
-                            new_point["heart_rate"] = value.get("value")
-                        elif metric_type == "SPEED" and "value" in value:
-                            new_point["pace"] = value.get("value")
-                        elif metric_type == "CADENCE" and "value" in value:
-                            new_point["cadence"] = value.get("value")
-                        elif metric_type == "VERTICAL_OSCILLATION" and "value" in value:
-                            new_point["vertical_oscillation"] = value.get("value")
-                        elif metric_type == "GROUND_CONTACT_TIME" and "value" in value:
-                            new_point["ground_contact_time"] = value.get("value")
-                        elif metric_type == "VERTICAL_RATIO" and "value" in value:
-                            new_point["vertical_ratio"] = value.get("value")
-                        elif metric_type == "STRIDE_LENGTH" and "value" in value:
-                            new_point["stride_length"] = value.get("value")
-                        elif metric_type == "POWER" and "value" in value:
-                            new_point["power"] = value.get("value")
-
-                        processed_points.append(new_point)
-
-        # Process splits data
-        splits = detailed_metrics.get("splits", [])
-
-        if isinstance(splits, list):
-            for split in splits:
-                if not isinstance(split, dict):
-                    continue
-
-                # Check if this is a lapDTOs field
-                if "lapDTOs" in split:
-                    # Use the nested lapDTOs instead
-                    laps = split.get("lapDTOs", [])
-                    if isinstance(laps, list):
-                        for lap in laps:
-                            process_single_lap(lap, processed_points)
-                else:
-                    # Process normal split
-                    process_single_lap(split, processed_points)
-
-        if processed_points:
-            logger.info(f"Processed {len(processed_points)} metric points")
-        else:
-            logger.warning(f"No detailed metrics extracted for activity ID")
-
-        return processed_points
-    except Exception as e:
-        logger.error(f"Error processing metric points: {e}")
-        return []
-
-
-def process_single_lap(lap, processed_points):
-    """Process a single lap/split and add to processed_points"""
-    if not isinstance(lap, dict):
-        return
-
-    # Try to get timestamp
-    timestamp = None
-    if "startTimeGMT" in lap:
-        time_str = lap.get("startTimeGMT")
-
-        for fmt in ["%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"]:
-            try:
-                timestamp = datetime.strptime(time_str, fmt)
-                break
-            except ValueError:
+        # Process each metric
+        for metric in metrics_list:
+            if not isinstance(metric, dict):
                 continue
 
-    if not timestamp:
-        return
+            metric_type = metric.get("metricType", "")
+            metric_values = metric.get("metrics", [])
 
-    # Create a new data point
-    new_point = {
-        "timestamp": timestamp,
-        "heart_rate": lap.get("averageHR"),
-        "pace": lap.get("averageSpeed"),
-        "cadence": lap.get("averageRunCadence"),
-        "vertical_oscillation": lap.get("verticalOscillation"),
-        "vertical_ratio": lap.get("verticalRatio"),
-        "ground_contact_time": lap.get("groundContactTime"),
-        "stride_length": lap.get("strideLength"),
-        "power": lap.get("averagePower"),
-        "lap_index": lap.get("lapIndex"),
-        "message_index": lap.get("messageIndex"),
-        "distance": lap.get("distance"),
-        "duration": lap.get("duration"),
-        "start_latitude": lap.get("startLatitude"),
-        "start_longitude": lap.get("startLongitude"),
-        "end_latitude": lap.get("endLatitude"),
-        "end_longitude": lap.get("endLongitude"),
-        "elevation_gain": lap.get("elevationGain"),
-        "elevation_loss": lap.get("elevationLoss")
-    }
+            for value in metric_values:
+                if not isinstance(value, dict) or "startTimeGMT" not in value:
+                    continue
 
-    # Check for existing point with this timestamp
-    existing = False
-    for point in processed_points:
-        if point["timestamp"] == timestamp:
-            # Update existing point with non-null values
-            for key, value in new_point.items():
-                if value is not None and key != "timestamp":
-                    if point[key] is None:
-                        point[key] = value
-            existing = True
-            break
+                # Parse timestamp
+                time_str = value.get("startTimeGMT", "")
+                timestamp = None
 
-    if not existing:
-        processed_points.append(new_point)
-
-
-def process_route_points(gps_data):
-    """Process GPS route points from the activity"""
-    route_points = []
-
-    if not gps_data:
-        logger.info("No GPS route points available")
-        return route_points
-
-    try:
-        # Check data format
-        if not isinstance(gps_data, list):
-            logger.warning(f"GPS data not in expected list format: {type(gps_data)}")
-            return route_points
-
-        # Process each GPS point
-        for i, point in enumerate(gps_data):
-            if not isinstance(point, dict):
-                continue
-
-            # Check for lat/lon coordinates
-            has_lat_lon = all(key in point for key in ['lat', 'lon'])
-            has_latitude_longitude = all(key in point for key in ['latitude', 'longitude'])
-
-            if not has_lat_lon and not has_latitude_longitude:
-                continue
-
-            # Get coordinates (try different field names)
-            latitude = point.get('lat', point.get('latitude'))
-            longitude = point.get('lon', point.get('longitude'))
-
-            # Get timestamp (try different field names and formats)
-            timestamp = None
-            if 'time' in point:
-                try:
-                    # Try parsing as unix timestamp (milliseconds)
-                    time_val = point['time']
-                    if isinstance(time_val, (int, float)):
-                        timestamp = datetime.fromtimestamp(time_val / 1000.0)
-                except (ValueError, TypeError, OverflowError):
-                    pass
-
-            if timestamp is None and 'startTimeGMT' in point:
-                time_str = point['startTimeGMT']
                 for fmt in ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S"]:
                     try:
                         timestamp = datetime.strptime(time_str, fmt)
@@ -625,57 +286,70 @@ def process_route_points(gps_data):
                     except ValueError:
                         continue
 
-            # If no timestamp, use a sequential one
-            if timestamp is None:
-                timestamp = datetime.now() + timedelta(seconds=i)
+                if not timestamp:
+                    continue
 
-            # Create route point
-            route_point = {
-                "timestamp": timestamp,
-                "latitude": latitude,
-                "longitude": longitude,
-                "altitude": point.get("altitude", point.get("ele")),
-                "speed": point.get("speed"),
-                "cumulative_ascent": point.get("cumulativeAscent"),
-                "cumulative_descent": point.get("cumulativeDescent"),
-                "distance_from_previous": point.get("distanceFromPreviousPoint"),
-                "distance_in_meters": point.get("distanceInMeters")
-            }
+                # Find or create point with this timestamp
+                point = None
+                for p in metrics_points:
+                    if p["timestamp"] == timestamp:
+                        point = p
+                        break
 
-            route_points.append(route_point)
+                if not point:
+                    point = {
+                        "timestamp": timestamp,
+                        "heart_rate": None,
+                        "pace": None,
+                        "cadence": None,
+                        "vertical_oscillation": None,
+                        "vertical_ratio": None,
+                        "ground_contact_time": None,
+                        "power": None
+                    }
+                    metrics_points.append(point)
 
-        if route_points:
-            logger.info(f"Processed {len(route_points)} GPS route points")
+                # Update the point with metric value
+                if "value" in value:
+                    if metric_type == "HEART_RATE":
+                        point["heart_rate"] = value.get("value")
+                    elif metric_type == "SPEED":
+                        point["pace"] = value.get("value")
+                    elif metric_type == "CADENCE":
+                        point["cadence"] = value.get("value")
+                    elif metric_type == "VERTICAL_OSCILLATION":
+                        point["vertical_oscillation"] = value.get("value")
+                    elif metric_type == "GROUND_CONTACT_TIME":
+                        point["ground_contact_time"] = value.get("value")
+                    elif metric_type == "VERTICAL_RATIO":
+                        point["vertical_ratio"] = value.get("value")
+                    elif metric_type == "POWER":
+                        point["power"] = value.get("value")
 
-        return route_points
+        return metrics_points
     except Exception as e:
-        logger.error(f"Error processing route points: {e}")
+        logger.error(f"Error extracting metrics: {e}")
         return []
 
 
-def process_heart_rate_zones(hr_data):
-    """Process heart rate zone data from the activity"""
+def extract_heart_rate_zones(hr_data):
+    """Extract heart rate zones from HR data"""
     hr_zones = []
 
     if not hr_data:
         return hr_zones
 
     try:
-        # Handle different data formats
+        # Find zones in the data
         zones = []
-
-        # If hr_data is a list, it might be the zones directly
         if isinstance(hr_data, list):
             zones = hr_data
-        # If hr_data is a dict, look for zones in various places
         elif isinstance(hr_data, dict):
-            # Check different possible locations
             for key in ['zones', 'timeInZones', 'heartRateZones']:
                 if key in hr_data and isinstance(hr_data[key], list):
                     zones = hr_data[key]
                     break
 
-            # If still not found, check allZones
             if not zones and 'allZones' in hr_data and isinstance(hr_data['allZones'], dict):
                 zones = hr_data['allZones'].get('zones', [])
 
@@ -684,12 +358,10 @@ def process_heart_rate_zones(hr_data):
             if not isinstance(zone, dict):
                 continue
 
-            # Get zone data (try different field names)
             zone_number = zone.get("zoneNumber", zone.get("zone"))
             seconds_in_zone = zone.get("secsInZone", zone.get("timeInZone", zone.get("seconds")))
             zone_low_boundary = zone.get("zoneLowBoundary", zone.get("min", zone.get("lower")))
 
-            # Skip if missing essential data
             if zone_number is None or seconds_in_zone is None:
                 continue
 
@@ -701,18 +373,16 @@ def process_heart_rate_zones(hr_data):
 
         return hr_zones
     except Exception as e:
-        logger.error(f"Error processing heart rate zones: {e}")
+        logger.error(f"Error extracting HR zones: {e}")
         return []
 
 
 def insert_workout_metrics(cursor, workout_id, metric_points):
-    """Insert detailed workout metrics into the database"""
+    """Insert workout metrics into the database"""
     if not metric_points:
-        logger.warning(f"No metric points to insert for workout ID: {workout_id}")
         return 0
 
     try:
-        # Prepare batch insert values
         values = []
         for point in metric_points:
             values.append((
@@ -724,23 +394,12 @@ def insert_workout_metrics(cursor, workout_id, metric_points):
                 point.get("vertical_oscillation"),
                 point.get("vertical_ratio"),
                 point.get("ground_contact_time"),
-                point.get("power"),
-                point.get("stride_length"),
-                point.get("lap_index"),
-                point.get("message_index"),
-                point.get("distance"),
-                point.get("duration"),
-                point.get("start_latitude"),
-                point.get("start_longitude"),
-                point.get("end_latitude"),
-                point.get("end_longitude"),
-                point.get("elevation_gain"),
-                point.get("elevation_loss")
+                point.get("power")
             ))
 
-        # Insert metrics in batches
+        # Insert in batches
         rows_inserted = 0
-        batch_size = 1000  # Insert in batches of 1000
+        batch_size = 1000
 
         for i in range(0, len(values), batch_size):
             batch = values[i:i + batch_size]
@@ -748,79 +407,25 @@ def insert_workout_metrics(cursor, workout_id, metric_points):
             cursor.executemany("""
                 INSERT INTO WorkoutMetrics (
                     WorkoutID, MetricTimestamp, HeartRate, Pace, Cadence,
-                    VerticalOscillation, VerticalRatio, GroundContactTime,
-                    Power, StrideLength, LapIndex, MessageIndex,
-                    Distance, Duration, StartLatitude, StartLongitude,
-                    EndLatitude, EndLongitude, ElevationGain, ElevationLoss
+                    VerticalOscillation, VerticalRatio, GroundContactTime, Power
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, batch)
 
             rows_inserted += len(batch)
-            logger.info(f"Inserted batch of {len(batch)} metrics (total: {rows_inserted})")
 
         return rows_inserted
     except Exception as e:
-        logger.error(f"Error inserting workout metrics: {e}")
-        return 0
-
-
-def insert_route_points(cursor, workout_id, route_points):
-    """Insert GPS route points into the database"""
-    if not route_points:
-        logger.info(f"No route points to insert for workout ID {workout_id}")
-        return 0
-
-    try:
-        # Prepare batch insert values
-        values = []
-        for point in route_points:
-            values.append((
-                workout_id,
-                point.get("timestamp"),
-                point.get("latitude"),
-                point.get("longitude"),
-                point.get("altitude"),
-                point.get("speed"),
-                point.get("cumulative_ascent"),
-                point.get("cumulative_descent"),
-                point.get("distance_from_previous"),
-                point.get("distance_in_meters")
-            ))
-
-        # Insert route points in batches
-        rows_inserted = 0
-        batch_size = 1000  # Insert in batches of 1000
-
-        for i in range(0, len(values), batch_size):
-            batch = values[i:i + batch_size]
-
-            cursor.executemany("""
-                INSERT INTO WorkoutRoutePoints (
-                    WorkoutID, Timestamp, Latitude, Longitude, 
-                    Altitude, Speed, CumulativeAscent, CumulativeDescent,
-                    DistanceFromPreviousPoint, DistanceInMeters
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, batch)
-
-            rows_inserted += len(batch)
-            logger.info(f"Inserted batch of {len(batch)} route points (total: {rows_inserted})")
-
-        return rows_inserted
-    except Exception as e:
-        logger.error(f"Error inserting route points: {e}")
+        logger.error(f"Error inserting metrics: {e}")
         return 0
 
 
 def insert_heart_rate_zones(cursor, workout_id, hr_zones):
     """Insert heart rate zone data into the database"""
     if not hr_zones:
-        logger.info(f"No heart rate zones to insert for workout ID {workout_id}")
         return 0
 
     try:
-        # Prepare insert values
         values = []
         for zone in hr_zones:
             values.append((
@@ -830,7 +435,6 @@ def insert_heart_rate_zones(cursor, workout_id, hr_zones):
                 zone.get("zone_low_boundary")
             ))
 
-        # Insert HR zones
         cursor.executemany("""
             INSERT INTO WorkoutHeartRateZones (
                 WorkoutID, ZoneNumber, SecondsInZone, ZoneLowBoundary
@@ -838,12 +442,9 @@ def insert_heart_rate_zones(cursor, workout_id, hr_zones):
             VALUES (?, ?, ?, ?)
         """, values)
 
-        rows_inserted = len(values)
-        logger.info(f"Inserted {rows_inserted} heart rate zones")
-
-        return rows_inserted
+        return len(values)
     except Exception as e:
-        logger.error(f"Error inserting heart rate zones: {e}")
+        logger.error(f"Error inserting HR zones: {e}")
         return 0
 
 
@@ -867,19 +468,31 @@ def main():
         conn, cursor = connect_to_database()
         print("Cursor connected")
 
-        # Verify database structure
-        check_table_structure(cursor)
+        # Create WorkoutHeartRateZones table if it doesn't exist
+        try:
+            cursor.execute("""
+                IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WorkoutHeartRateZones')
+                CREATE TABLE WorkoutHeartRateZones (
+                    HRZoneID INT PRIMARY KEY IDENTITY(1,1),
+                    WorkoutID INT NOT NULL,
+                    ZoneNumber INT NOT NULL,
+                    SecondsInZone FLOAT,
+                    ZoneLowBoundary INT,
+                    FOREIGN KEY (WorkoutID) REFERENCES Workouts(WorkoutID)
+                )
+            """)
+        except Exception as e:
+            logger.warning(f"Error checking/creating HR zones table: {e}")
 
         # Track insertion statistics
         activities_inserted = 0
         metrics_inserted = 0
-        route_points_inserted = 0
         hr_zones_inserted = 0
 
         # Process each activity
         for activity in activities:
             try:
-                # Extract activity ID early for better error reporting
+                # Get activity ID
                 activity_id = activity.get("activityId")
                 if not activity_id:
                     logger.warning("Activity missing activityId, skipping")
@@ -898,18 +511,13 @@ def main():
                     workout_id = existing[0]
                     logger.info(f"Workout at {processed_data['start_time']} already exists (ID: {workout_id}).")
 
-                    # Check if workout metrics already exist
+                    # Check if metrics already exist
                     cursor.execute("SELECT COUNT(*) FROM WorkoutMetrics WHERE WorkoutID = ?", (workout_id,))
                     metrics_count = cursor.fetchone()[0]
 
                     if metrics_count > 0:
-                        # Check if we have heart rate zones
-                        cursor.execute("SELECT COUNT(*) FROM WorkoutHeartRateZones WHERE WorkoutID = ?", (workout_id,))
-                        hr_count = cursor.fetchone()[0]
-
-                        if hr_count > 0:
-                            logger.info(f"Workout ID {workout_id} already has metrics and HR zones. Skipping...")
-                            continue
+                        logger.info(f"Workout ID {workout_id} already has metrics. Skipping...")
+                        continue
 
                     logger.info(f"Adding detailed metrics to existing workout ID: {workout_id}")
                 else:
@@ -917,55 +525,34 @@ def main():
                     workout_id = insert_workout(cursor, processed_data)
                     if workout_id:
                         activities_inserted += 1
-                        logger.info(
-                            f"Inserted workout: {processed_data['workout_type']} on {processed_data['workout_date']} (ID: {workout_id})")
+                        logger.info(f"Inserted workout: {processed_data['workout_type']} (ID: {workout_id})")
                     else:
                         logger.error(f"Failed to insert workout for activity ID: {activity_id}")
                         continue
 
                 # Get detailed metrics for the workout
-                logger.info(f"Fetching detailed metrics for activity ID: {activity_id}")
-                detailed_metrics = get_detailed_workout_metrics(client, activity_id)
+                detailed_metrics = get_detailed_metrics(client, activity_id)
 
-                # Process and insert workout metrics (time series data, laps, splits)
-                metric_points = process_metric_points(detailed_metrics)
+                # Process and insert workout metrics
+                metric_points = extract_workout_metrics(detailed_metrics.get("details", {}))
                 if metric_points:
                     rows = insert_workout_metrics(cursor, workout_id, metric_points)
                     metrics_inserted += rows
-                    logger.info(f"Inserted {rows} detailed metric points for workout ID {workout_id}")
-
-                # Process and insert GPS route points
-                gps_data = detailed_metrics.get("gps_data", [])
-                if gps_data:
-                    route_points = process_route_points(gps_data)
-                    if route_points:
-                        rows = insert_route_points(cursor, workout_id, route_points)
-                        route_points_inserted += rows
-                        logger.info(f"Inserted {rows} route points for workout ID {workout_id}")
-                    else:
-                        logger.info(f"No GPS route points available for workout ID {workout_id}")
-                else:
-                    logger.info(f"No GPS data available for workout ID {workout_id}")
+                    logger.info(f"Inserted {rows} metric points for workout ID {workout_id}")
 
                 # Process and insert heart rate zones
-                hr_data = detailed_metrics.get("hr_data", {})
-                hr_zones = process_heart_rate_zones(hr_data)
+                hr_zones = extract_heart_rate_zones(detailed_metrics.get("hr_data", {}))
                 if hr_zones:
                     rows = insert_heart_rate_zones(cursor, workout_id, hr_zones)
                     hr_zones_inserted += rows
                     logger.info(f"Inserted {rows} heart rate zones for workout ID {workout_id}")
-                else:
-                    logger.info(f"No heart rate zone data available for workout ID {workout_id}")
 
                 # Commit after each activity is fully processed
                 conn.commit()
-                logger.info(f"Successfully processed and committed activity ID: {activity_id}")
 
             except Exception as e:
                 logger.error(f"Error processing activity: {e}")
-                # Rollback changes for this activity
                 conn.rollback()
-                # Continue to next activity
                 continue
 
         # Close connections
@@ -975,15 +562,12 @@ def main():
         # Print summary
         print(
             f"All activities inserted successfully! ({activities_inserted} new activities, "
-            f"{metrics_inserted} metric points, {route_points_inserted} route points, "
-            f"{hr_zones_inserted} heart rate zones)"
+            f"{metrics_inserted} metric points, {hr_zones_inserted} heart rate zones)"
         )
         return 0
 
     except Exception as e:
         logger.error(f"Error in workout data collection: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
         if 'conn' in locals() and conn:
             try:
                 conn.rollback()
