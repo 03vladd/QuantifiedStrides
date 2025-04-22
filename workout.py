@@ -1,8 +1,12 @@
 from datetime import datetime, timedelta
 import garminconnect
+import garmindb
 import pyodbc
 import logging
 import sys
+
+from garmindb import GarminConnectConfigManager
+
 import config
 
 # Set up logging
@@ -11,15 +15,22 @@ logger = logging.getLogger("workout")
 
 
 def connect_to_garmin():
-    """Connect to Garmin API and return client"""
+    """Connect to Garmin API using GarminDB and return client"""
     try:
-        client = garminconnect.Garmin(config.GARMIN_EMAIL, config.GARMIN_PASSWORD)
-        client.login()
-        return client
+        # Use GarminDB's configuration manager
+        gcm = GarminConnectConfigManager()
+        garmin_connect = GarminConnect()
+
+        # You can override credentials if needed
+        if hasattr(config, 'GARMIN_EMAIL') and hasattr(config, 'GARMIN_PASSWORD'):
+            garmin_connect.login(config.GARMIN_EMAIL, config.GARMIN_PASSWORD)
+        else:
+            garmin_connect.login(gcm.get_user(), gcm.get_password())
+
+        return garmin_connect
     except Exception as e:
         logger.error(f"Failed to connect to Garmin: {e}")
         sys.exit(1)
-
 
 def connect_to_database():
     """Connect to the database and return connection and cursor"""
