@@ -1,0 +1,58 @@
+{
+  "_notes": {
+    "structure": "sleep.py reads sleep_dto = sleep_data['dailySleepDTO'] for all stage/HRV/RHR fields. Only 'sleepScore' is at the root level.",
+    "units": "All sleep stage values are in SECONDS. sleep.py divides by 60 before inserting into the DB (minutes).",
+    "table": "SleepSessions"
+  },
+  "dailySleepDTO": {
+    "startGMT": "2025-04-07T00:15:00",
+    "endGMT": "2025-04-07T07:45:00",
+    "startLocal": "2025-04-07T03:15:00",
+    "endLocal": "2025-04-07T10:45:00",
+    "unmeasurableSleepSeconds": 0,
+    "deepSleepSeconds": 4200,
+    "lightSleepSeconds": 9000,
+    "remSleepSeconds": 5400,
+    "awakeSleepSeconds": 1200,
+    "avgSleepStress": 18.3,
+    "sleepScoreFeedback": "POSITIVE_HRV_OVERNIGHT",
+    "sleepScoreInsight": "GOOD",
+    "avgOvernightHrv": 48.5,
+    "hrvStatus": "BALANCED",
+    "bodyBatteryChange": 45,
+    "restingHeartRate": 52,
+    "sleepVersion": 2,
+    "deviceRemCapable": true,
+    "sleepFromDevice": true,
+    "averageSpO2Value": 97.0,
+    "lowestSpO2Value": 93,
+    "highestSpO2Value": 99,
+    "averageRespirationValue": 14.0,
+    "lowestRespirationValue": 12.0,
+    "highestRespirationValue": 17.0
+  },
+  "sleepScores": {
+    "totalDuration": { "qualifierKey": "GOOD", "value": 94 },
+    "stress": { "qualifierKey": "GOOD", "value": 82 },
+    "awakeCount": { "qualifierKey": "GOOD", "value": 100 },
+    "overallScore": 82,
+    "remPercentage": { "qualifierKey": "GOOD", "value": 78 },
+    "restlessness": { "qualifierKey": "GOOD", "value": 95 },
+    "lightPercentage": { "qualifierKey": "GOOD", "value": 65 },
+    "deepPercentage": { "qualifierKey": "GOOD", "value": 75 }
+  },
+  "sleepScore": 82,
+  "remSleepData": true,
+  "sleepLevels": [
+    { "startGMT": "2025-04-07T00:15:00", "endGMT": "2025-04-07T00:45:00", "activityLevel": 0.0 },
+    { "startGMT": "2025-04-07T00:45:00", "endGMT": "2025-04-07T01:15:00", "activityLevel": 1.0 },
+    { "startGMT": "2025-04-07T01:15:00", "endGMT": "2025-04-07T02:00:00", "activityLevel": 2.0 },
+    { "startGMT": "2025-04-07T02:00:00", "endGMT": "2025-04-07T02:45:00", "activityLevel": 3.0 }
+  ],
+  "sleepMovement": [
+    { "startGMT": "2025-04-07T00:15:00", "endGMT": "2025-04-07T00:16:00", "activityLevel": 0.12 }
+  ],
+  "restlessMoments": [
+    { "startGMT": "2025-04-07T02:30:00", "endGMT": "2025-04-07T02:33:00" }
+  ]
+}
