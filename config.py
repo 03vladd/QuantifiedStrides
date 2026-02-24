@@ -17,15 +17,26 @@ DEFAULT_USER_ID = 1
 DB_CONNECTION = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;Database=QuantifiedStridesDB;Trusted_Connection=yes;"
 
 # API credentials
+# All credentials must be set as environment variables. No default values are
+# provided here intentionally - hardcoded credentials in source code are a
+# security risk (CWE-798). Set these before running the application:
+#
+#   export GARMIN_EMAIL="your@email.com"
+#   export GARMIN_PASSWORD="yourpassword"
+#   export OPENWEATHER_API_KEY="your_key"
+#   export AMBEE_API_KEY="your_key"
+#
+# Or create a .env file and load it with python-dotenv (not included in repo).
+
 # Garmin Connect API
-GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL", "vasiuvlad984@gmail.com")
-GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD", "Mariguanas1")
+GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL")
+GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD")
 
 # OpenWeatherMap API
-OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "819ff67a3fe8e6af5f825bb2688729d9")
+OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 
 # Ambee API (Pollen data)
-AMBEE_API_KEY = os.environ.get("AMBEE_API_KEY", "18659f688d4744d922beeb2bb44df415532241b138fe8ca07cae8b387009cd2b")
+AMBEE_API_KEY = os.environ.get("AMBEE_API_KEY")
 
 # Default location (Cluj-Napoca)
 DEFAULT_LOCATION = {

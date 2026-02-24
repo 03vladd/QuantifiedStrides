@@ -231,7 +231,11 @@ def insert_workout(cursor, data):
 
         # Get the ID of the inserted workout
         cursor.execute("SELECT @@IDENTITY")
-        workout_id = cursor.fetchone()[0]
+        row = cursor.fetchone()
+        if row is None:
+            logger.error("Failed to retrieve inserted workout ID")
+            return None
+        workout_id = row[0]
 
         return workout_id
     except Exception as e:
@@ -481,7 +485,7 @@ def main():
         # Connect to database
         logger.info("Connecting to database...")
         conn, cursor = connect_to_database()
-        print("Cursor connected")
+        logger.info("Database connection established")
 
         # Create WorkoutHeartRateZones table if it doesn't exist
         try:
@@ -574,8 +578,7 @@ def main():
         cursor.close()
         conn.close()
 
-        # Print summary
-        print(
+        logger.info(
             f"All activities inserted successfully! ({activities_inserted} new activities, "
             f"{metrics_inserted} metric points, {hr_zones_inserted} heart rate zones)"
         )
@@ -586,11 +589,11 @@ def main():
         if 'conn' in locals() and conn:
             try:
                 conn.rollback()
-            except:
+            except Exception:
                 pass
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
         return 1
 

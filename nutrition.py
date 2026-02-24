@@ -189,11 +189,11 @@ def main():
         if 'conn' in locals() and conn:
             try:
                 conn.rollback()
-            except:
+            except Exception:
                 pass
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
         return 1
 

@@ -17,7 +17,7 @@ def connect_to_database():
     try:
         conn = pyodbc.connect(config.DB_CONNECTION)
         cursor = conn.cursor()
-        print("Cursor connected")
+        logger.info("Database connection established")
         return conn, cursor
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
@@ -42,14 +42,21 @@ def get_active_injuries(cursor, user_id=1):
         return []
 
 
+_UPDATABLE_INJURY_FIELDS = {"EndDate", "Severity", "Notes"}
+
+
 def update_injury(cursor, injury_id, field, value):
     """Update a specific field for an injury"""
+    if field not in _UPDATABLE_INJURY_FIELDS:
+        raise ValueError(f"Field '{field}' is not a permitted update target")
+
     try:
         if field == "EndDate" and isinstance(value, str):
             # Convert string date to datetime
             value = datetime.strptime(value, config.DATE_FORMAT).date()
 
-        sql = f"UPDATE Injuries SET {field} = ? WHERE InjuryID = ?"
+        # Column name is validated against a whitelist above, so interpolation is safe.
+        sql = f"UPDATE Injuries SET {field} = ? WHERE InjuryID = ?"  # noqa: S608
         cursor.execute(sql, (value, injury_id))
         return cursor.rowcount
     except Exception as e:
@@ -267,11 +274,11 @@ def main():
         if 'conn' in locals() and conn:
             try:
                 conn.rollback()
-            except:
+            except Exception:
                 pass
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
         return 1
 

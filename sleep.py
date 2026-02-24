@@ -2,16 +2,9 @@ from datetime import datetime, timedelta
 import os
 import garminconnect
 import pyodbc
-import json
 import logging
 import sys
 import config
-
-# Add this at the very top, right after imports
-print("Sleep script starting...")
-logger = logging.getLogger("sleep")
-logger.setLevel(logging.DEBUG)
-logger.info("Sleep script initialized")
 
 # Set up logging
 logging.basicConfig(
@@ -461,14 +454,14 @@ def main():
         # Get today's date
         today_date_str = datetime.today().strftime(config.DATE_FORMAT)
         today_date = datetime.strptime(today_date_str, config.DATE_FORMAT).date()
-        print(f"Fetching sleep data for: {today_date_str}")
+        logger.info(f"Fetching sleep data for: {today_date_str}")
 
         # Connect to Garmin
         client = connect_to_garmin()
 
         # Connect to database
         conn, cursor = connect_to_database()
-        print("Cursor connected")
+        logger.info("Database connection established")
 
         # Check if data already exists for today
         existing_data = check_existing_sleep_data(cursor, config.DEFAULT_USER_ID, today_date)
@@ -505,7 +498,7 @@ def main():
 
             # Commit all changes
             conn.commit()
-            print(f"Inserted sleep data for {today_date_str} successfully!")
+            logger.info(f"Inserted sleep data for {today_date_str} successfully")
         else:
             logger.error("Failed to insert sleep data")
             conn.rollback()
@@ -519,17 +512,13 @@ def main():
         if 'conn' in locals() and conn:
             try:
                 conn.rollback()
-            except:
+            except Exception:
                 pass
             try:
                 conn.close()
-            except:
+            except Exception:
                 pass
         return 1
-
-sleepdata = get_sleep_data(client=connect_to_garmin(), date_str="2025-04-08")
-print("Raw sleep data from Garmin:")
-print(json.dumps(sleepdata, indent=2))
 
 if __name__ == "__main__":
     exit(main())
