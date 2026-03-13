@@ -1,70 +1,38 @@
-"""
-Configuration settings for QuantifiedStrides
-
-This file contains all configuration settings for the application.
-For security, API keys and credentials should be stored as environment variables.
-"""
-
 import os
-from datetime import datetime
+from pathlib import Path
 
-# Application settings
-APP_NAME = "QuantifiedStrides"
-VERSION = "1.0.1"
-DEFAULT_USER_ID = 1
 
-# Database settings
-DB_CONNECTION = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;Database=QuantifiedStridesDB;Trusted_Connection=yes;"
+def _load_dotenv():
+    env_path = Path(__file__).parent / ".env"
+    if not env_path.exists():
+        return
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip())
 
-# API credentials
-# Garmin Connect API
-GARMIN_EMAIL = os.environ.get("GARMIN_EMAIL", "vasiuvlad984@gmail.com")
-GARMIN_PASSWORD = os.environ.get("GARMIN_PASSWORD", "Mariguanas1")
 
-# OpenWeatherMap API
-OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "819ff67a3fe8e6af5f825bb2688729d9")
+_load_dotenv()
 
-# Ambee API (Pollen data)
-AMBEE_API_KEY = os.environ.get("AMBEE_API_KEY", "18659f688d4744d922beeb2bb44df415532241b138fe8ca07cae8b387009cd2b")
 
-# Default location (Cluj-Napoca)
-DEFAULT_LOCATION = {
-    "name": "Cluj-Napoca",
-    "lat": 46.7667,
-    "lon": 23.6000,
-    "timezone": "Europe/Bucharest"
-}
+def _require(name: str) -> str:
+    value = os.environ.get(name)
+    if not value:
+        raise EnvironmentError(
+            f"Required environment variable '{name}' is not set. "
+            "Copy .env.example to .env and fill in your credentials."
+        )
+    return value
 
-# Sport types
-SPORT_TYPES = {
-    "running": "Run",
-    "cycling": "Cycling",
-    "swimming": "Swimming",
-    "strength_training": "Strength Training",
-    "other": "Other"
-}
 
-# Indoor activities keywords
-INDOOR_KEYWORDS = [
-    'indoor',
-    'treadmill',
-    'stationary',
-    'trainer',
-    'gym',
-    'strength',
-    'pool',
-    'home'
-]
+GARMIN_EMAIL = _require("GARMIN_EMAIL")
+GARMIN_PASSWORD = _require("GARMIN_PASSWORD")
+OPENWEATHER_API_KEY = _require("OPENWEATHER_API_KEY")
 
-# Date and time settings
-DATE_FORMAT = "%Y-%m-%d"
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-# Logging settings
-LOG_FILE = "quantified_strides.log"
-LOG_LEVEL = "INFO"
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
-# Scripts
-AUTOMATED_SCRIPTS = ["workout.py", "sleep.py", "environment.py"]
-INTERACTIVE_SCRIPTS = ["daily_subjective.py", "injuries.py", "nutrition.py"]
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_NAME = os.environ.get("DB_NAME", "quantifiedstrides")
+DB_USER = _require("DB_USER")
+DB_PASSWORD = _require("DB_PASSWORD")

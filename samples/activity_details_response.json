@@ -1,0 +1,50 @@
+{
+  "_notes": {
+    "structure": "workout_metrics.py reads metricDescriptors to build a dynamic index→column map, then iterates activityDetailMetrics.",
+    "timestamp": "directTimestamp values are milliseconds since Unix epoch. Divided by 1000 before datetime.fromtimestamp().",
+    "cadence": "directDoubleCadence is the full steps/min figure. directCadence is strides/min (half). The script prefers directDoubleCadence when present.",
+    "pace": "directSpeed is m/s. Converted to min/km by: (1000 / speed_ms) / 60",
+    "units": {
+      "directHeartRate": "BPM → HeartRate INT",
+      "directSpeed": "m/s → Pace FLOAT (min/km)",
+      "directDoubleCadence": "steps/min → Cadence FLOAT",
+      "directVerticalOscillation": "cm → VerticalOscillation FLOAT",
+      "directVerticalRatio": "% → VerticalRatio FLOAT",
+      "directGroundContactTime": "ms → GroundContactTime FLOAT",
+      "directPower": "watts → Power FLOAT"
+    },
+    "table": "WorkoutMetrics"
+  },
+  "activityId": 17234567890,
+  "metricDescriptors": [
+    { "metricsIndex": 0, "key": "directTimestamp",           "unit": { "id": 120, "key": "ms",         "factor": 1.0 } },
+    { "metricsIndex": 1, "key": "directLatitude",            "unit": { "id": 21,  "key": "dd",         "factor": 1.0 } },
+    { "metricsIndex": 2, "key": "directLongitude",           "unit": { "id": 22,  "key": "dd",         "factor": 1.0 } },
+    { "metricsIndex": 3, "key": "directAltitude",            "unit": { "id": 1,   "key": "m",          "factor": 1.0 } },
+    { "metricsIndex": 4, "key": "directHeartRate",           "unit": { "id": 18,  "key": "bpm",        "factor": 1.0 } },
+    { "metricsIndex": 5, "key": "directSpeed",               "unit": { "id": 35,  "key": "mps",        "factor": 1.0 } },
+    { "metricsIndex": 6, "key": "directDoubleCadence",       "unit": { "id": 34,  "key": "spm",        "factor": 2.0 } },
+    { "metricsIndex": 7, "key": "directVerticalOscillation", "unit": { "id": 55,  "key": "cm",         "factor": 1.0 } },
+    { "metricsIndex": 8, "key": "directGroundContactTime",   "unit": { "id": 62,  "key": "ms",         "factor": 1.0 } },
+    { "metricsIndex": 9, "key": "directVerticalRatio",       "unit": { "id": 56,  "key": "percent",    "factor": 1.0 } },
+    { "metricsIndex": 10, "key": "directPower",              "unit": { "id": 58,  "key": "watt",       "factor": 1.0 } }
+  ],
+  "activityDetailMetrics": [
+    { "metrics": [1744017600000, 46.7671,  23.6003, 312.0, 142, 3.12, 172.0, 8.6, 241.0, 7.1, 231.0] },
+    { "metrics": [1744017605000, 46.7674,  23.6008, 312.2, 145, 3.18, 174.0, 8.4, 239.0, 7.0, 235.0] },
+    { "metrics": [1744017610000, 46.7677,  23.6013, 312.5, 148, 3.21, 174.0, 8.3, 238.0, 6.9, 238.0] },
+    { "metrics": [1744017615000, 46.7680,  23.6018, 312.8, 152, 3.15, 172.0, 8.5, 242.0, 7.2, 234.0] },
+    { "metrics": [1744017620000, 46.7683,  23.6024, 313.0, 155, 3.08, 170.0, 8.7, 245.0, 7.4, 229.0] },
+    { "metrics": [1744017625000, 46.7686,  23.6029, 313.1, 157, 3.22, 176.0, 8.2, 237.0, 6.8, 241.0] },
+    { "metrics": [1744017630000, 46.7689,  23.6035, 313.3, 159, 3.25, 176.0, 8.1, 235.0, 6.7, 244.0] },
+    { "metrics": [1744017635000, 46.7692,  23.6040, 313.5, 161, 3.19, 174.0, 8.4, 240.0, 7.0, 239.0] },
+    { "metrics": [1744017640000, 46.7695,  23.6046, 313.6, 163, 3.28, 178.0, 8.0, 233.0, 6.6, 248.0] },
+    { "metrics": [1744017645000, 46.7698,  23.6051, 313.8, 164, 3.30, 178.0, 7.9, 231.0, 6.5, 251.0] }
+  ],
+  "geoPolylineDTO": {
+    "startPoint": { "lat": 46.7671, "lon": 23.6003, "altitude": 312.0 },
+    "endPoint":   { "lat": 46.7698, "lon": 23.6051, "altitude": 313.8 },
+    "minLat": 46.7671, "maxLat": 46.7698,
+    "minLon": 23.6003, "maxLon": 23.6051
+  }
+}
