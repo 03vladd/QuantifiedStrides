@@ -54,22 +54,21 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
 
 sleep_dto = sleep_data.get("dailySleepDTO", {})
 
-deep_sleep_sec = sleep_dto.get("deepSleepSeconds") or 0
+deep_sleep_sec  = sleep_dto.get("deepSleepSeconds")  or 0
 light_sleep_sec = sleep_dto.get("lightSleepSeconds") or 0
-rem_sleep_sec = sleep_dto.get("remSleepSeconds") or 0
+rem_sleep_sec   = sleep_dto.get("remSleepSeconds")   or 0
 awake_sleep_sec = sleep_dto.get("awakeSleepSeconds") or 0
 
 duration_minutes = (deep_sleep_sec + light_sleep_sec + rem_sleep_sec + awake_sleep_sec) // 60
 
-sleep_score = sleep_data.get("sleepScore", None)
-hrv = sleep_dto.get("avgOvernightHrv", None)
-rhr = sleep_dto.get("restingHeartRate", None)
-
-avg_stress = sleep_dto.get("avgSleepStress", None)
-feedback = sleep_dto.get("sleepScoreFeedback", "")
-insight = sleep_dto.get("sleepScoreInsight", "")
-hrv_status = sleep_dto.get("hrvStatus", "")
-battery_change = sleep_dto.get("bodyBatteryChange", None)
+sleep_score    = sleep_dto.get("sleepScores", {}).get("overall", {}).get("value")
+hrv            = sleep_data.get("avgOvernightHrv")
+rhr            = sleep_data.get("restingHeartRate")
+avg_stress     = sleep_dto.get("avgSleepStress")
+feedback       = sleep_dto.get("sleepScoreFeedback", "")
+insight        = sleep_dto.get("sleepScoreInsight", "")
+hrv_status     = sleep_data.get("hrvStatus", "")
+battery_change = sleep_data.get("bodyBatteryChange")
 
 cursor.execute(sql_insert, (
     1,  # user_id

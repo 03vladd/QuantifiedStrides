@@ -128,3 +128,38 @@ CREATE TABLE injuries (
     severity    VARCHAR(50),
     notes       TEXT
 );
+
+-- Strength training (manually logged from Apple Notes)
+CREATE TABLE strength_sessions (
+    session_id   SERIAL PRIMARY KEY,
+    user_id      INT NOT NULL REFERENCES users(user_id),
+    session_date DATE NOT NULL,
+    raw_notes    TEXT,
+    UNIQUE (user_id, session_date)
+);
+
+CREATE TABLE strength_exercises (
+    exercise_id    SERIAL PRIMARY KEY,
+    session_id     INT NOT NULL REFERENCES strength_sessions(session_id),
+    exercise_order INT NOT NULL,
+    name           VARCHAR(200) NOT NULL,
+    notes          TEXT
+);
+
+CREATE TABLE strength_sets (
+    set_id               SERIAL PRIMARY KEY,
+    exercise_id          INT NOT NULL REFERENCES strength_exercises(exercise_id),
+    set_number           INT NOT NULL,
+    reps                 INT,
+    reps_min             INT,
+    reps_max             INT,
+    duration_seconds     INT,
+    weight_kg            FLOAT,
+    is_bodyweight        BOOLEAN DEFAULT FALSE,
+    band_color           VARCHAR(50),
+    per_hand             BOOLEAN DEFAULT FALSE,
+    per_side             BOOLEAN DEFAULT FALSE,
+    plus_bar             BOOLEAN DEFAULT FALSE,
+    weight_includes_bar  BOOLEAN DEFAULT FALSE,
+    total_weight_kg      FLOAT
+);
