@@ -1,1 +1,0 @@
-# QuantifiedStrides Test Package
