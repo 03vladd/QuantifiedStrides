@@ -6,10 +6,14 @@ Run with:  python test_connections.py
 """
 
 import sys
+import psycopg2
 import requests
-import pyodbc
 import garminconnect
-from config import GARMIN_EMAIL, GARMIN_PASSWORD, OPENWEATHER_API_KEY, AMBEE_API_KEY
+from config import (
+    GARMIN_EMAIL, GARMIN_PASSWORD,
+    OPENWEATHER_API_KEY,
+    DB_HOST, DB_NAME, DB_USER, DB_PASSWORD,
+)
 
 PASS = "[PASS]"
 FAIL = "[FAIL]"
@@ -17,20 +21,19 @@ FAIL = "[FAIL]"
 LAT, LON = 46.7667, 23.6000
 
 
-def test_sql_server():
-    print("\n--- SQL Server ---")
+def test_postgresql():
+    print("\n--- PostgreSQL ---")
     try:
-        conn = pyodbc.connect(
-            "Driver={ODBC Driver 17 for SQL Server};"
-            "Server=localhost;"
-            "Database=QuantifiedStridesDB;"
-            "Trusted_Connection=yes;"
+        conn = psycopg2.connect(
+            host=DB_HOST, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD
         )
         cursor = conn.cursor()
-        cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'")
+        cursor.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
+        )
         tables = [row[0] for row in cursor.fetchall()]
         conn.close()
-        print(f"{PASS} Connected. Tables found: {', '.join(tables)}")
+        print(f"{PASS} Connected. Tables found: {', '.join(sorted(tables))}")
         return True
     except Exception as e:
         print(f"{FAIL} {e}")
@@ -72,19 +75,20 @@ def test_openweathermap():
         return False
 
 
-def test_ambee():
-    print("\n--- Ambee Pollen ---")
+def test_open_meteo():
+    print("\n--- Open-Meteo Pollen ---")
     try:
-        url = f"https://api.ambeedata.com/latest/pollen/by-lat-lng?lat={LAT}&lng={LON}"
-        headers = {"x-api-key": AMBEE_API_KEY, "Content-type": "application/json"}
-        r = requests.get(url, headers=headers, timeout=10)
+        url = (
+            f"https://air-quality-api.open-meteo.com/v1/air-quality"
+            f"?latitude={LAT}&longitude={LON}&current=grass_pollen,birch_pollen,ragweed_pollen"
+        )
+        r = requests.get(url, timeout=10)
         r.raise_for_status()
-        data = r.json()
-        entry = data.get("data", [{}])[0]
-        grass = entry.get("grass_pollen", "n/a")
-        tree = entry.get("tree_pollen", "n/a")
-        weed = entry.get("weed_pollen", "n/a")
-        print(f"{PASS} Grass: {grass}, Tree: {tree}, Weed: {weed}")
+        current = r.json().get("current", {})
+        grass = current.get("grass_pollen", "n/a")
+        tree = current.get("birch_pollen", "n/a")
+        weed = current.get("ragweed_pollen", "n/a")
+        print(f"{PASS} Grass: {grass}, Tree (birch): {tree}, Weed (ragweed): {weed} grains/m³")
         return True
     except Exception as e:
         print(f"{FAIL} {e}")
@@ -94,17 +98,17 @@ def test_ambee():
 if __name__ == "__main__":
     print("====== QuantifiedStrides connection tests ======")
 
-    sql_ok = test_sql_server()
+    sql_ok = test_postgresql()
     garmin_ok, _ = test_garmin()
     weather_ok = test_openweathermap()
-    ambee_ok = test_ambee()
+    pollen_ok = test_open_meteo()
 
     print("\n====== Summary ======")
     results = {
-        "SQL Server":     sql_ok,
-        "Garmin Connect": garmin_ok,
-        "OpenWeatherMap": weather_ok,
-        "Ambee Pollen":   ambee_ok,
+        "PostgreSQL":        sql_ok,
+        "Garmin Connect":    garmin_ok,
+        "OpenWeatherMap":    weather_ok,
+        "Open-Meteo Pollen": pollen_ok,
     }
     all_passed = True
     for name, ok in results.items():

@@ -31,4 +31,8 @@ def _require(name: str) -> str:
 GARMIN_EMAIL = _require("GARMIN_EMAIL")
 GARMIN_PASSWORD = _require("GARMIN_PASSWORD")
 OPENWEATHER_API_KEY = _require("OPENWEATHER_API_KEY")
-AMBEE_API_KEY = _require("AMBEE_API_KEY")
+
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_NAME = os.environ.get("DB_NAME", "quantifiedstrides")
+DB_USER = _require("DB_USER")
+DB_PASSWORD = _require("DB_PASSWORD")

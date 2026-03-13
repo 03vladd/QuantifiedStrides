@@ -1,197 +1,147 @@
-from datetime import datetime, timedelta
-import pyodbc
+from datetime import datetime
+
 import requests
-import json
 
-from config import OPENWEATHER_API_KEY, AMBEE_API_KEY
+from config import OPENWEATHER_API_KEY
+from db import get_connection
 
-# 1) Database connection
-conn = pyodbc.connect(
-    "Driver={ODBC Driver 17 for SQL Server};"
-    "Server=localhost;"
-    "Database=QuantifiedStridesDB;"
-    "Trusted_Connection=yes;"
-)
+conn = get_connection()
 cursor = conn.cursor()
 print("Cursor connected")
 
-# 2) Get today's date for workout matching
 today = datetime.now().date()
 print(f"Collecting environmental data for: {today}")
 
-# 3) ALWAYS create a workout for today if one doesn't exist
-workout_id = None  # Initialize to None
-
-try:
-    # First check if a workout for today already exists
-    cursor.execute("SELECT WorkoutID FROM Workouts WHERE WorkoutDate = ?", (today,))
-    row = cursor.fetchone()
-
-    if row:
-        workout_id = row[0]
-        print(f"Found workout from today with ID: {workout_id}")
-    else:
-        # ALWAYS create a new workout if none exists for today
-        print("No workouts found for today. Creating a placeholder workout...")
-        placeholder_sql = """
-        INSERT INTO Workouts (
-            UserID, Sport, StartTime, EndTime, WorkoutType,
-            CaloriesBurned, AvgHeartRate, MaxHeartRate,
-            TrainingVolume, Location, WorkoutDate
-        )
-        OUTPUT INSERTED.WorkoutID
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        """
-        current_time = datetime.now()
-        cursor.execute(
-            placeholder_sql,
-            (
-                1,  # UserID
-                "other",  # Sport
-                current_time,  # StartTime
-                current_time,  # EndTime
-                "Environmental Data Collection",  # WorkoutType
-                0,  # CaloriesBurned
-                0,  # AvgHeartRate
-                0,  # MaxHeartRate
-                0,  # TrainingVolume
-                "Cluj-Napoca",  # Location
-                today  # WorkoutDate
-            )
-        )
-        workout_id = cursor.fetchone()[0]
-        conn.commit()
-        print(f"Created placeholder workout with ID: {workout_id}")
-
-    # Verify that we have a valid workout ID before proceeding
-    if workout_id is None:
-        raise ValueError("Failed to get or create a valid workout ID")
-
-except Exception as e:
-    print(f"Error managing workout ID: {e}")
-    conn.close()
-    raise
-
-# 4) Get current location coordinates (Cluj-Napoca)
-DEFAULT_LAT = 46.7667
-DEFAULT_LON = 23.6000
-
-# 5) Get current weather data from OpenWeatherMap
-weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={DEFAULT_LAT}&lon={DEFAULT_LON}&units=metric&appid={OPENWEATHER_API_KEY}"
-weather_response = requests.get(weather_url)
-weather_data = weather_response.json()
-
-# 6) Get UV Index from OpenWeatherMap One Call API
-uv_url = f"https://api.openweathermap.org/data/2.5/onecall?lat={DEFAULT_LAT}&lon={DEFAULT_LON}&exclude=minutely,hourly,daily,alerts&appid={OPENWEATHER_API_KEY}"
-uv_response = requests.get(uv_url)
-uv_data = uv_response.json()
-
-# 7) Get pollen data from Ambee API
-pollen_url = f"https://api.ambeedata.com/latest/pollen/by-lat-lng?lat={DEFAULT_LAT}&lng={DEFAULT_LON}"
-pollen_headers = {
-    "x-api-key": AMBEE_API_KEY,
-    "Content-type": "application/json"
-}
-try:
-    pollen_response = requests.get(pollen_url, headers=pollen_headers)
-    pollen_response.raise_for_status()
-    pollen_data = pollen_response.json()
-    pollen_values = pollen_data.get("data", [{}])[0]
-    pollen_index = (
-        pollen_values.get("grass_pollen", 0) +
-        pollen_values.get("tree_pollen", 0) +
-        pollen_values.get("weed_pollen", 0)
-    ) / 3
-except Exception as e:
-    print(f"Warning: Ambee pollen API unavailable ({e}). Storing NULL.")
-    pollen_index = None
-
-# 8) Extract the needed data
-# Location from weather data
-location = weather_data.get("name", "Cluj-Napoca")
-
-# Temperature in Celsius
-temperature = weather_data.get("main", {}).get("temp")
-
-# Wind data
-wind_speed = weather_data.get("wind", {}).get("speed")
-wind_direction = weather_data.get("wind", {}).get("deg")
-
-# Humidity percentage
-humidity = weather_data.get("main", {}).get("humidity")
-
-# Precipitation (rain in last hour if available)
-precipitation = weather_data.get("rain", {}).get("1h", 0) if "rain" in weather_data else 0
-
-# Get UV index from one call API
-uv_index = uv_data.get("current", {}).get("uvi", 0)
-
-# Current time
-record_date_time = datetime.now()
-
-# 9) Create SQL insert statement
-sql_insert = """
-INSERT INTO EnvironmentData (
-    WorkoutID,
-    RecordDateTime,
-    Location,
-    Temperature,
-    WindSpeed,
-    WindDirection,
-    Humidity,
-    Precipitation,
-    PollenIndex,
-    UVIndex,
-    SubjectiveNotes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-"""
-
-# 10) Execute insert with current values - ONLY if we have a valid workout_id
-if workout_id is None:
-    print("Cannot insert environment data without a valid WorkoutID")
-    cursor.close()
-    conn.close()
-    raise SystemExit(1)
-
-# Skip if environment data already recorded for this workout
-cursor.execute("SELECT EnvID FROM EnvironmentData WHERE WorkoutID = ?", (workout_id,))
+# Skip if environment data for today already exists
+cursor.execute(
+    "SELECT env_id FROM environment_data WHERE record_datetime::date = %s",
+    (today,)
+)
 if cursor.fetchone():
-    print(f"Environment data for WorkoutID {workout_id} already recorded. Skipping.")
+    print(f"Environment data for {today} already recorded. Skipping.")
     cursor.close()
     conn.close()
     raise SystemExit(0)
 
-try:
-    cursor.execute(
-        sql_insert,
-        (
-            workout_id,  # Using the workout ID from today
-            record_date_time,
-            location,
-            temperature,
-            wind_speed,
-            wind_direction,
-            humidity,
-            precipitation,
-            pollen_index,
-            uv_index,
-            "Daily environment check"  # Default note
-        )
-    )
+# Link to today's workout if one exists — NULL on rest days (no placeholder created)
+cursor.execute(
+    "SELECT workout_id, start_latitude, start_longitude, location FROM workouts WHERE workout_date = %s AND user_id = 1",
+    (today,)
+)
+row = cursor.fetchone()
+workout_id = row[0] if row else None
+workout_lat = row[1] if row else None
+workout_lon = row[2] if row else None
+workout_location_name = row[3] if row else None
 
+if workout_id:
+    print(f"Linking environment data to workout ID: {workout_id}")
+else:
+    print("No workout today — recording environment data as standalone (rest day).")
+
+# Determine coordinates:
+# 1. Use workout GPS if available (outdoor activity with start coordinates)
+# 2. Fall back to IP geolocation (reflects actual current location)
+if workout_lat and workout_lon:
+    lat, lon = workout_lat, workout_lon
+    print(f"Using workout GPS coordinates: {lat}, {lon}")
+else:
+    try:
+        geo = requests.get("https://ipinfo.io/json", timeout=5).json()
+        lat, lon = map(float, geo["loc"].split(","))
+        workout_location_name = geo.get("city", workout_location_name)
+        print(f"Using IP geolocation: {workout_location_name} ({lat}, {lon})")
+    except Exception as e:
+        print(f"Warning: IP geolocation failed ({e}). Coordinates unavailable.")
+        lat = lon = None
+
+if lat is None or lon is None:
+    print("No coordinates available — cannot collect environment data.")
+    cursor.close()
+    conn.close()
+    raise SystemExit(1)
+
+# Current weather
+weather_url = (
+    f"https://api.openweathermap.org/data/2.5/weather"
+    f"?lat={lat}&lon={lon}&units=metric&appid={OPENWEATHER_API_KEY}"
+)
+weather_data = requests.get(weather_url).json()
+
+# UV index
+uv_url = (
+    f"https://api.openweathermap.org/data/2.5/onecall"
+    f"?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={OPENWEATHER_API_KEY}"
+)
+uv_data = requests.get(uv_url).json()
+
+# Pollen (Open-Meteo Air Quality — no API key required)
+try:
+    pollen_url = (
+        f"https://air-quality-api.open-meteo.com/v1/air-quality"
+        f"?latitude={lat}&longitude={lon}"
+        f"&current=grass_pollen,birch_pollen,ragweed_pollen"
+    )
+    pollen_data = requests.get(pollen_url, timeout=10).json().get("current", {})
+    grass_pollen = pollen_data.get("grass_pollen")
+    tree_pollen = pollen_data.get("birch_pollen")
+    weed_pollen = pollen_data.get("ragweed_pollen")
+except Exception as e:
+    print(f"Warning: Open-Meteo pollen unavailable ({e}). Storing NULL.")
+    grass_pollen = tree_pollen = weed_pollen = None
+
+location = weather_data.get("name") or workout_location_name or "Unknown"
+temperature = weather_data.get("main", {}).get("temp")
+wind_speed = weather_data.get("wind", {}).get("speed")
+wind_direction = weather_data.get("wind", {}).get("deg")
+humidity = weather_data.get("main", {}).get("humidity")
+precipitation = weather_data.get("rain", {}).get("1h", 0) if "rain" in weather_data else 0
+uv_index = uv_data.get("current", {}).get("uvi", 0)
+record_datetime = datetime.now()
+
+sql_insert = """
+INSERT INTO environment_data (
+    workout_id,
+    record_datetime,
+    location,
+    temperature,
+    wind_speed,
+    wind_direction,
+    humidity,
+    precipitation,
+    grass_pollen,
+    tree_pollen,
+    weed_pollen,
+    uv_index,
+    subjective_notes
+) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+"""
+
+try:
+    cursor.execute(sql_insert, (
+        workout_id,
+        record_datetime,
+        location,
+        temperature,
+        wind_speed,
+        wind_direction,
+        humidity,
+        precipitation,
+        grass_pollen,
+        tree_pollen,
+        weed_pollen,
+        uv_index,
+        "Daily environment check",
+    ))
     conn.commit()
     print(f"Environmental data for {location} recorded successfully!")
-    print(f"Temperature: {temperature}°C")
-    print(f"Wind: {wind_speed} m/s, Direction: {wind_direction}°")
-    print(f"Humidity: {humidity}%")
-    print(f"Precipitation: {precipitation} mm")
-    print(f"Pollen Index: {pollen_index}")
+    print(f"Temperature: {temperature}°C, Wind: {wind_speed} m/s at {wind_direction}°")
+    print(f"Humidity: {humidity}%, Precipitation: {precipitation} mm")
+    print(f"Pollen — grass: {grass_pollen}, tree: {tree_pollen}, weed: {weed_pollen} grains/m³")
     print(f"UV Index: {uv_index}")
-
 except Exception as e:
     conn.rollback()
     print(f"Error inserting environmental data: {e}")
-
 finally:
     cursor.close()
     conn.close()

@@ -1,22 +1,19 @@
 from datetime import datetime
-import pyodbc
 
-# 1) Database connection
-conn = pyodbc.connect(
-    "Driver={ODBC Driver 17 for SQL Server};"
-    "Server=localhost;"
-    "Database=QuantifiedStridesDB;"
-    "Trusted_Connection=yes;"
-)
+from db import get_connection
+
+conn = get_connection()
 cursor = conn.cursor()
 print("Cursor connected")
 
-# 2) Get today's date
 today = datetime.now().date()
 print(f"Recording daily subjective data for: {today}")
 
-# 3) Check if we already have an entry for today
-cursor.execute("SELECT SubjectiveID FROM DailySubjective WHERE EntryDate = ?", (today,))
+# Check if we already have an entry for today
+cursor.execute(
+    "SELECT subjective_id FROM daily_subjective WHERE entry_date = %s",
+    (today,)
+)
 row = cursor.fetchone()
 
 if row:
@@ -27,57 +24,14 @@ if row:
         conn.close()
         print("Operation canceled.")
         exit()
-    # Delete the existing entry if we're updating
-    cursor.execute("DELETE FROM DailySubjective WHERE EntryDate = ?", (today,))
+    cursor.execute("DELETE FROM daily_subjective WHERE entry_date = %s", (today,))
     conn.commit()
     print("Previous entry deleted. Please enter new values.")
 
-# 4) Get workout ID for today if exists
-workout_id = None
-cursor.execute("SELECT WorkoutID FROM Workouts WHERE WorkoutDate = ?", (today,))
-row = cursor.fetchone()
-if row:
-    workout_id = row[0]
-    print(f"Found workout for today with ID: {workout_id}")
-else:
-    print("No workout found for today. Creating a reference workout...")
-    # Create a placeholder workout for reference
-    placeholder_sql = """
-    INSERT INTO Workouts (
-        UserID, Sport, StartTime, EndTime, WorkoutType,
-        CaloriesBurned, AvgHeartRate, MaxHeartRate,
-        TrainingVolume, Location, WorkoutDate
-    )
-    OUTPUT INSERTED.WorkoutID
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    """
-    current_time = datetime.now()
-    cursor.execute(
-        placeholder_sql,
-        (
-            1,  # UserID
-            "rest",  # Sport
-            current_time,  # StartTime
-            current_time,  # EndTime
-            "Rest Day",  # WorkoutType
-            0,  # CaloriesBurned
-            0,  # AvgHeartRate
-            0,  # MaxHeartRate
-            0,  # TrainingVolume
-            "Home",  # Location
-            today  # WorkoutDate
-        )
-    )
-    workout_id = cursor.fetchone()[0]
-    conn.commit()
-    print(f"Created placeholder workout with ID: {workout_id}")
-
-# 5) Collect subjective data from user
 print("\n--- Daily Subjective Data Entry ---")
 print("Rate the following from 1-10 (or leave blank for null)")
 
 
-# Helper function to get integer input with null option
 def get_int_input(prompt, min_val=1, max_val=10):
     while True:
         value = input(prompt + f" ({min_val}-{max_val}, or press Enter for null): ")
@@ -101,35 +55,31 @@ sleep_rating = get_int_input("Sleep Quality")
 recovery = get_int_input("Recovery")
 reflection = input("Reflection (any additional notes): ")
 
-# 6) Insert the data
 sql_insert = """
-INSERT INTO DailySubjective (
-    UserID,
-    EntryDate,
-    EnergyLevel,
-    Mood,
-    HRV,
-    Soreness,
-    SleepQuality,
-    Recovery,
-    Reflection
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO daily_subjective (
+    user_id,
+    entry_date,
+    energy_level,
+    mood,
+    hrv,
+    soreness,
+    sleep_quality,
+    recovery,
+    reflection
+) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
 """
 
-cursor.execute(
-    sql_insert,
-    (
-        1,           # UserID
-        today,       # EntryDate
-        energy_level,# EnergyLevel
-        mood,        # Mood
-        hrv,         # HRV
-        soreness,    # Soreness
-        sleep_rating,# SleepQuality
-        recovery,    # Recovery
-        reflection   # Reflection
-    )
-)
+cursor.execute(sql_insert, (
+    1,
+    today,
+    energy_level,
+    mood,
+    hrv,
+    soreness,
+    sleep_rating,
+    recovery,
+    reflection,
+))
 
 conn.commit()
 cursor.close()

@@ -1,22 +1,22 @@
 from datetime import datetime
 
 import garminconnect
-import pyodbc
 
 from config import GARMIN_EMAIL, GARMIN_PASSWORD
+from db import get_connection
 
-# Maps Garmin metric descriptor keys to WorkoutMetrics column names.
-# directDoubleCadence is the full steps/min figure; directCadence is half-cadence
-# (strides/min). The script prefers directDoubleCadence when available.
+# Maps Garmin metric descriptor keys to workout_metrics column names.
+# directDoubleCadence is the full steps/min figure; directCadence is half-cadence.
+# The script prefers directDoubleCadence when available.
 GARMIN_KEY_TO_COLUMN = {
-    "directHeartRate":           "HeartRate",
-    "directSpeed":               "Pace",               # converted m/s → min/km
-    "directDoubleCadence":       "Cadence",
-    "directCadence":             "Cadence",
-    "directVerticalOscillation": "VerticalOscillation",
-    "directVerticalRatio":       "VerticalRatio",
-    "directGroundContactTime":   "GroundContactTime",
-    "directPower":               "Power",
+    "directHeartRate":           "heart_rate",
+    "directSpeed":               "pace",               # converted m/s → min/km
+    "directDoubleCadence":       "cadence",
+    "directCadence":             "cadence",
+    "directVerticalOscillation": "vertical_oscillation",
+    "directVerticalRatio":       "vertical_ratio",
+    "directGroundContactTime":   "ground_contact_time",
+    "directPower":               "power",
 }
 
 
@@ -43,16 +43,16 @@ def build_column_map(descriptors):
         idx = d["metricsIndex"]
 
         if key == "directCadence" and has_double_cadence:
-            continue  # skip half-cadence when full cadence is available
+            continue
 
         if key not in GARMIN_KEY_TO_COLUMN:
             continue
 
         col_name = GARMIN_KEY_TO_COLUMN[key]
 
-        if col_name == "HeartRate":
+        if col_name == "heart_rate":
             transform = lambda v: int(v) if v is not None else None
-        elif col_name == "Pace":
+        elif col_name == "pace":
             transform = speed_to_pace
         else:
             transform = lambda v: float(v) if v is not None else None
@@ -86,25 +86,20 @@ def main():
 
     workout_date = start_time_dt.date()
 
-    # 2) Connect to DB and find the matching WorkoutID
-    conn = pyodbc.connect(
-        "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=localhost;"
-        "Database=QuantifiedStridesDB;"
-        "Trusted_Connection=yes;"
-    )
+    # 2) Connect to DB and find the matching workout_id
+    conn = get_connection()
     cursor = conn.cursor()
 
-    # Match by exact start time first, fall back to date only
+    # Match by exact start time first, fall back to date
     cursor.execute(
-        "SELECT WorkoutID FROM Workouts WHERE StartTime = ?",
+        "SELECT workout_id FROM workouts WHERE start_time = %s",
         (start_time_dt,)
     )
     row = cursor.fetchone()
 
     if not row:
         cursor.execute(
-            "SELECT WorkoutID FROM Workouts WHERE WorkoutDate = ? AND WorkoutType != 'Environmental Data Collection'",
+            "SELECT workout_id FROM workouts WHERE workout_date = %s AND user_id = 1",
             (workout_date,)
         )
         row = cursor.fetchone()
@@ -115,15 +110,15 @@ def main():
         return
 
     workout_id = row[0]
-    print(f"Matched WorkoutID: {workout_id}")
+    print(f"Matched workout_id: {workout_id}")
 
     # 3) Skip if metrics already exist for this workout
     cursor.execute(
-        "SELECT COUNT(*) FROM WorkoutMetrics WHERE WorkoutID = ?",
+        "SELECT COUNT(*) FROM workout_metrics WHERE workout_id = %s",
         (workout_id,)
     )
     if cursor.fetchone()[0] > 0:
-        print(f"WorkoutMetrics already populated for WorkoutID {workout_id}. Skipping.")
+        print(f"workout_metrics already populated for workout_id {workout_id}. Skipping.")
         conn.close()
         return
 
@@ -139,7 +134,6 @@ def main():
         conn.close()
         return
 
-    # Find the timestamp descriptor index
     timestamp_index = next(
         (d["metricsIndex"] for d in descriptors if d["key"] == "directTimestamp"),
         None
@@ -152,19 +146,18 @@ def main():
     col_map = build_column_map(descriptors)
     print(f"Mapped columns: {sorted(set(col for col, _ in col_map.values()))}")
 
-    # 5) Insert each data point
     sql_insert = """
-    INSERT INTO WorkoutMetrics (
-        WorkoutID,
-        MetricTimestamp,
-        HeartRate,
-        Pace,
-        Cadence,
-        VerticalOscillation,
-        VerticalRatio,
-        GroundContactTime,
-        Power
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    INSERT INTO workout_metrics (
+        workout_id,
+        metric_timestamp,
+        heart_rate,
+        pace,
+        cadence,
+        vertical_oscillation,
+        vertical_ratio,
+        ground_contact_time,
+        power
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     rows_inserted = 0
@@ -174,17 +167,16 @@ def main():
         if timestamp_index >= len(metrics) or metrics[timestamp_index] is None:
             continue
 
-        # Garmin timestamps are milliseconds since Unix epoch
         metric_timestamp = datetime.fromtimestamp(metrics[timestamp_index] / 1000)
 
         values = {
-            "HeartRate": None,
-            "Pace": None,
-            "Cadence": None,
-            "VerticalOscillation": None,
-            "VerticalRatio": None,
-            "GroundContactTime": None,
-            "Power": None,
+            "heart_rate": None,
+            "pace": None,
+            "cadence": None,
+            "vertical_oscillation": None,
+            "vertical_ratio": None,
+            "ground_contact_time": None,
+            "power": None,
         }
 
         for idx, (col_name, transform) in col_map.items():
@@ -194,21 +186,20 @@ def main():
         cursor.execute(sql_insert, (
             workout_id,
             metric_timestamp,
-            values["HeartRate"],
-            values["Pace"],
-            values["Cadence"],
-            values["VerticalOscillation"],
-            values["VerticalRatio"],
-            values["GroundContactTime"],
-            values["Power"],
+            values["heart_rate"],
+            values["pace"],
+            values["cadence"],
+            values["vertical_oscillation"],
+            values["vertical_ratio"],
+            values["ground_contact_time"],
+            values["power"],
         ))
         rows_inserted += 1
 
     conn.commit()
     cursor.close()
     conn.close()
-
-    print(f"Inserted {rows_inserted} metric records for WorkoutID {workout_id}.")
+    print(f"Inserted {rows_inserted} metric records for workout_id {workout_id}.")
 
 
 if __name__ == "__main__":
