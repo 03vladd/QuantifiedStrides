@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1/storage_v2/_src_/database/QuantifiedStridesDB.UBKciA/schema/dbo.sYMBAA.zip" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/ce7bc212-10d5-432d-8415-b6ff7a071ab1/storage_v2/_src_/database/QuantifiedStridesDB.UBKciA/schema/dbo.sYMBAA.zip" afterDir="false" />
+    <list default="true" id="07b01b40-0fd1-4145-bccd-9bb94f813d07" name="Changes" comment="Created a Check In script, that gets triggered in the morning to gather useful information, but also post workout to gather the actual reality comapred to what the plan was.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/schema.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sleep.py" beforeDir="false" afterPath="$PROJECT_DIR$/sleep.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -219,6 +214,47 @@
       <workItem from="1771941655793" duration="5369000" />
       <workItem from="1773399127703" duration="3812000" />
     </task>
+    <task id="LOCAL-00001" summary="Script to figure out sleep data format.">
+      <option name="closed" value="true" />
+      <created>1773412632890</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1773412632890</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Backfill all sleep and workout data from 01.01.2026 until today">
+      <option name="closed" value="true" />
+      <created>1773412657652</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1773412657652</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Created CLI to enter workouts in order to bypass the bad Garmin strength workout API.">
+      <option name="closed" value="true" />
+      <created>1773412701376</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1773412701376</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Modified sleep to fit latest changes to DB and information pipeline">
+      <option name="closed" value="true" />
+      <created>1773412741966</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1773412741966</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Created a Check In script, that gets triggered in the morning to gather useful information, but also post workout to gather the actual reality comapred to what the plan was.">
+      <option name="closed" value="true" />
+      <created>1773425687926</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1773425687926</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -234,6 +270,14 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Script to figure out sleep data format." />
+    <MESSAGE value="Backfill all sleep and workout data from 01.01.2026 until today" />
+    <MESSAGE value="Created CLI to enter workouts in order to bypass the bad Garmin strength workout API." />
+    <MESSAGE value="Modified sleep to fit latest changes to DB and information pipeline" />
+    <MESSAGE value="Created a Check In script, that gets triggered in the morning to gather useful information, but also post workout to gather the actual reality comapred to what the plan was." />
+    <option name="LAST_COMMIT_MESSAGE" value="Created a Check In script, that gets triggered in the morning to gather useful information, but also post workout to gather the actual reality comapred to what the plan was." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/QuantifiedStrides$sleep.coverage" NAME="sleep Coverage Results" MODIFIED="1744025022469" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

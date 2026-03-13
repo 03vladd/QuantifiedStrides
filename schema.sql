@@ -160,6 +160,7 @@ CREATE TABLE strength_sessions (
     session_id   SERIAL PRIMARY KEY,
     user_id      INT NOT NULL REFERENCES users(user_id),
     session_date DATE NOT NULL,
+    session_type VARCHAR(10) CHECK (session_type IN ('upper', 'lower')),
     raw_notes    TEXT,
     UNIQUE (user_id, session_date)
 );
