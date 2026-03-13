@@ -129,6 +129,32 @@ CREATE TABLE injuries (
     notes       TEXT
 );
 
+-- Morning readiness check-in (informs today's decision)
+CREATE TABLE daily_readiness (
+    readiness_id      SERIAL PRIMARY KEY,
+    user_id           INT NOT NULL REFERENCES users(user_id),
+    entry_date        DATE NOT NULL,
+    overall_feel      INT CHECK (overall_feel BETWEEN 1 AND 10),
+    legs_feel         INT CHECK (legs_feel BETWEEN 1 AND 10),
+    upper_body_feel   INT CHECK (upper_body_feel BETWEEN 1 AND 10),
+    joint_feel        INT CHECK (joint_feel BETWEEN 1 AND 10),
+    injury_note       TEXT,
+    time_available    VARCHAR(10) CHECK (time_available IN ('short', 'medium', 'long')),
+    going_out_tonight BOOLEAN,
+    UNIQUE (user_id, entry_date)
+);
+
+-- Post-workout reflection (informs tomorrow's decision + trains the model)
+CREATE TABLE workout_reflection (
+    reflection_id   SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL REFERENCES users(user_id),
+    entry_date      DATE NOT NULL,
+    session_rpe     INT CHECK (session_rpe BETWEEN 1 AND 10),
+    session_quality INT CHECK (session_quality BETWEEN 1 AND 10),
+    notes           TEXT,
+    UNIQUE (user_id, entry_date)
+);
+
 -- Strength training (manually logged from Apple Notes)
 CREATE TABLE strength_sessions (
     session_id   SERIAL PRIMARY KEY,
