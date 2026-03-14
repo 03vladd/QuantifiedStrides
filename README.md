@@ -14,8 +14,7 @@ Automated daily ingestion from multiple sources:
 | Source | Data |
 |---|---|
 | **Garmin Connect** | Workouts (HR zones, VO2max, cadence, power, GPS), sleep sessions (HRV, stages, body battery), workout time-series metrics |
-| **OpenWeatherMap** | Temperature, wind, precipitation, UV index |
-| **Ambee** | Pollen levels (grass, tree, weed) |
+| **OpenWeatherMap** | Temperature, wind, precipitation, UV index, pollen |
 | **Manual input** | Morning readiness check-in, post-workout reflection, free-text journal |
 
 ### Streamlit Dashboard
@@ -103,11 +102,10 @@ HR response by gradient band, grade cost model (linear regression HR ~ gradient)
 - PostgreSQL (local)
 - Garmin Connect account
 - OpenWeatherMap API key
-- Ambee API key
 
 ### Install
 ```bash
-git clone https://github.com/your-username/QuantifiedStrides.git
+git clone https://github.com/03vladd/QuantifiedStrides.git
 cd QuantifiedStrides
 python -m venv .venv
 .venv\Scripts\activate       # Windows
@@ -117,7 +115,7 @@ pip install -r requirements.txt
 ### Configure
 ```bash
 cp .env.example .env
-# Fill in: GARMIN_EMAIL, GARMIN_PASSWORD, OPENWEATHER_API_KEY, AMBEE_API_KEY
+# Fill in: GARMIN_EMAIL, GARMIN_PASSWORD, OPENWEATHER_API_KEY
 #          DB_USER, DB_PASSWORD, ANTHROPIC_API_KEY
 ```
 
