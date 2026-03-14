@@ -15,9 +15,11 @@ from db import get_connection
 BAR_WEIGHT_KG = 20.0
 
 INSERT_SESSION = """
-INSERT INTO strength_sessions (user_id, session_date, raw_notes)
-VALUES (%s, %s, %s)
-ON CONFLICT (user_id, session_date) DO UPDATE SET raw_notes = EXCLUDED.raw_notes
+INSERT INTO strength_sessions (user_id, session_date, session_type, raw_notes)
+VALUES (%s, %s, %s, %s)
+ON CONFLICT (user_id, session_date) DO UPDATE SET
+    session_type = EXCLUDED.session_type,
+    raw_notes    = EXCLUDED.raw_notes
 RETURNING session_id;
 """
 DELETE_EXERCISES = "DELETE FROM strength_exercises WHERE session_id = %s;"
@@ -283,8 +285,8 @@ def collect_exercise(order):
     return ex
 
 
-def print_summary(session_date, exercises):
-    print(f"\n========== Session: {session_date.strftime('%d.%m.%Y')} ==========")
+def print_summary(session_date, session_type, exercises):
+    print(f"\n========== {session_type.upper()} — {session_date.strftime('%d.%m.%Y')} ==========")
     for ex in exercises:
         s0     = ex["sets"][0] if ex["sets"] else {}
         n_sets = len(ex["sets"])
@@ -318,11 +320,11 @@ def print_summary(session_date, exercises):
     print("=" * 44)
 
 
-def save(session_date, exercises):
+def save(session_date, session_type, exercises):
     conn = get_connection()
     cur  = conn.cursor()
 
-    cur.execute(INSERT_SESSION, (1, session_date, None))
+    cur.execute(INSERT_SESSION, (1, session_date, session_type, None))
     session_id = cur.fetchone()[0]
     cur.execute(DELETE_EXERCISES, (session_id,))
 
@@ -379,7 +381,17 @@ def main():
                 break
             print("  Invalid date. Use DD.MM or DD.MM.YYYY.")
 
-    print(f"\nLogging strength session for {session_date.strftime('%d.%m.%Y')}")
+    while True:
+        raw = ask("Session type: (u) upper  (l) lower", "u")
+        if raw in ("u", "upper"):
+            session_type = "upper"
+            break
+        elif raw in ("l", "lower"):
+            session_type = "lower"
+            break
+        print("  Enter 'u' for upper or 'l' for lower.")
+
+    print(f"\nLogging {session_type} session for {session_date.strftime('%d.%m.%Y')}")
     print("Enter exercises one by one. Leave name blank when done.\n")
 
     exercises = []
@@ -394,7 +406,7 @@ def main():
         sys.exit(0)
 
     while True:
-        print_summary(session_date, exercises)
+        print_summary(session_date, session_type, exercises)
         action = ask("\nAction: (s) save  (e) edit exercise  (d) delete exercise  (c) cancel", "s")
 
         if action == "s":
@@ -417,8 +429,8 @@ def main():
                 if new_ex:
                     exercises[idx - 1] = new_ex
 
-    session_id = save(session_date, exercises)
-    print(f"Saved — session_id={session_id} for {session_date.strftime('%d.%m.%Y')}.")
+    session_id = save(session_date, session_type, exercises)
+    print(f"Saved — session_id={session_id} ({session_type}) for {session_date.strftime('%d.%m.%Y')}.")
 
 
 if __name__ == "__main__":

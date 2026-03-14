@@ -17,6 +17,11 @@ GARMIN_KEY_TO_COLUMN = {
     "directVerticalRatio":       "vertical_ratio",
     "directGroundContactTime":   "ground_contact_time",
     "directPower":               "power",
+    "directLatitude":            "latitude",
+    "directLongitude":           "longitude",
+    "directAltitude":            "altitude",
+    "directElevation":           "altitude",           # some devices use this key
+    "directDistance":            "distance",
 }
 
 
@@ -156,11 +161,19 @@ def main():
         vertical_oscillation,
         vertical_ratio,
         ground_contact_time,
-        power
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+        power,
+        latitude,
+        longitude,
+        altitude,
+        distance,
+        gradient_pct
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     rows_inserted = 0
+    prev_altitude = None
+    prev_distance = None
+
     for point in data_points:
         metrics = point.get("metrics", [])
 
@@ -177,11 +190,38 @@ def main():
             "vertical_ratio": None,
             "ground_contact_time": None,
             "power": None,
+            "latitude": None,
+            "longitude": None,
+            "altitude": None,
+            "distance": None,
         }
 
         for idx, (col_name, transform) in col_map.items():
             if idx < len(metrics) and metrics[idx] is not None:
                 values[col_name] = transform(metrics[idx])
+
+        # Compute gradient_pct = Δaltitude / Δhorizontal_distance × 100
+        # Primary: use cumulative distance if available
+        # Fallback: derive horizontal distance from pace (min/km) × Δt (1s per point)
+        gradient_pct = None
+        alt  = values["altitude"]
+        dist = values["distance"]
+        pace = values["pace"]   # min/km
+
+        if alt is not None and prev_altitude is not None:
+            d_alt = alt - prev_altitude
+            d_dist = None
+            if dist is not None and prev_distance is not None:
+                d_dist = dist - prev_distance
+            elif pace is not None and pace > 0:
+                # pace in min/km → speed in m/s = 1000 / (pace × 60)
+                speed_ms = 1000.0 / (pace * 60.0)
+                d_dist = speed_ms * 1.0   # 1-second intervals
+            if d_dist is not None and d_dist > 0.5:
+                gradient_pct = round(d_alt / d_dist * 100, 2)
+
+        if alt  is not None: prev_altitude = alt
+        if dist is not None: prev_distance = dist
 
         cursor.execute(sql_insert, (
             workout_id,
@@ -193,6 +233,11 @@ def main():
             values["vertical_ratio"],
             values["ground_contact_time"],
             values["power"],
+            values["latitude"],
+            values["longitude"],
+            values["altitude"],
+            values["distance"],
+            gradient_pct,
         ))
         rows_inserted += 1
 

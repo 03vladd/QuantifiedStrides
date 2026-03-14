@@ -10,6 +10,19 @@ CREATE TABLE users (
 -- Default single athlete
 INSERT INTO users (name) VALUES ('Athlete');
 
+CREATE TABLE user_profile (
+    user_id        INT PRIMARY KEY REFERENCES users(user_id),
+    goal           VARCHAR(20) NOT NULL CHECK (goal IN (
+                       'athlete', 'strength', 'hypertrophy',
+                       'bodybuilding', 'powerlifting')),
+    gym_days_week  INT NOT NULL CHECK (
+                       (goal NOT IN ('bodybuilding','powerlifting') AND gym_days_week BETWEEN 2 AND 4)
+                       OR
+                       (goal IN ('bodybuilding','powerlifting') AND gym_days_week BETWEEN 2 AND 6)
+                   ),
+    primary_sports JSONB DEFAULT '{}'   -- e.g. {"xc_mtb": 5, "trail_run": 5, "climbing": 4}
+);
+
 CREATE TABLE workouts (
     workout_id                SERIAL PRIMARY KEY,
     user_id                   INT NOT NULL REFERENCES users(user_id),
@@ -155,6 +168,69 @@ CREATE TABLE workout_reflection (
     UNIQUE (user_id, entry_date)
 );
 
+-- ---------------------------------------------------------------------------
+-- Exercise knowledge base
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE exercises (
+    exercise_id       SERIAL PRIMARY KEY,
+    name              VARCHAR(200) NOT NULL UNIQUE,
+    source            VARCHAR(20)  DEFAULT 'wger' CHECK (source IN ('wger', 'custom')),
+
+    -- Movement taxonomy
+    movement_pattern  VARCHAR(20) CHECK (movement_pattern IN (
+                          'push_h', 'push_v', 'pull_h', 'pull_v',
+                          'hinge', 'squat', 'carry', 'rotation',
+                          'plyo', 'isolation', 'stability')),
+    quality_focus     VARCHAR(20) CHECK (quality_focus IN (
+                          'power', 'strength', 'hypertrophy',
+                          'endurance', 'stability')),
+
+    -- Muscles (controlled vocabulary as arrays)
+    primary_muscles   TEXT[],
+    secondary_muscles TEXT[],
+
+    -- Equipment
+    equipment         TEXT[],
+
+    -- Difficulty
+    skill_level       VARCHAR(15) CHECK (skill_level IN ('beginner', 'intermediate', 'advanced')),
+    bilateral         BOOLEAN DEFAULT TRUE,
+    contraction_type  VARCHAR(15) CHECK (contraction_type IN ('explosive', 'controlled', 'isometric', 'mixed')),
+
+    -- Fatigue profile
+    systemic_fatigue  INT CHECK (systemic_fatigue BETWEEN 1 AND 5),
+    cns_load          INT CHECK (cns_load BETWEEN 1 AND 5),
+
+    -- Joint stress per joint (1-5, stored as JSONB)
+    -- e.g. {"shoulder": 2, "elbow": 1, "wrist": 1, "knee": 1, "hip": 2, "lower_back": 3, "ankle": 1}
+    joint_stress      JSONB DEFAULT '{}',
+
+    -- Sport carryover (1-5 per sport)
+    -- e.g. {"xc_mtb": 3, "trail_run": 4, "climbing": 2, "ski": 3, "snowboard": 2}
+    sport_carryover   JSONB DEFAULT '{}',
+
+    -- Goal carryover (1-5 per goal)
+    -- e.g. {"power": 2, "strength": 4, "hypertrophy": 3, "endurance": 1, "stability": 2}
+    goal_carryover    JSONB DEFAULT '{}',
+
+    notes             TEXT
+);
+
+-- Progression chains (branching tree — one exercise can progress multiple ways)
+CREATE TABLE exercise_progressions (
+    progression_id    SERIAL PRIMARY KEY,
+    from_exercise_id  INT NOT NULL REFERENCES exercises(exercise_id),
+    to_exercise_id    INT NOT NULL REFERENCES exercises(exercise_id),
+    progression_type  VARCHAR(10) CHECK (progression_type IN ('harder', 'easier', 'lateral')),
+    goal_branch       VARCHAR(20) CHECK (goal_branch IN (
+                          'power', 'strength', 'hypertrophy',
+                          'endurance', 'stability')),
+    notes             TEXT,
+    UNIQUE (from_exercise_id, to_exercise_id, goal_branch)
+);
+
+-- ---------------------------------------------------------------------------
 -- Strength training (manually logged from Apple Notes)
 CREATE TABLE strength_sessions (
     session_id   SERIAL PRIMARY KEY,

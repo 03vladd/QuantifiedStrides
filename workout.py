@@ -45,8 +45,27 @@ INSERT INTO workouts (
     , start_latitude
     , start_longitude
     , workout_date
+    , elevation_gain
+    , elevation_loss
+    , aerobic_training_effect
+    , anaerobic_training_effect
+    , training_stress_score
+    , normalized_power
+    , avg_power
+    , max_power
+    , total_steps
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (user_id, start_time) DO UPDATE SET
+      elevation_gain             = EXCLUDED.elevation_gain
+    , elevation_loss             = EXCLUDED.elevation_loss
+    , aerobic_training_effect    = EXCLUDED.aerobic_training_effect
+    , anaerobic_training_effect  = EXCLUDED.anaerobic_training_effect
+    , training_stress_score      = EXCLUDED.training_stress_score
+    , normalized_power           = EXCLUDED.normalized_power
+    , avg_power                  = EXCLUDED.avg_power
+    , max_power                  = EXCLUDED.max_power
+    , total_steps                = EXCLUDED.total_steps
 RETURNING workout_id;
 """
 
@@ -102,6 +121,16 @@ for activity in activities:
     start_latitude = activity.get("startLatitude")
     start_longitude = activity.get("startLongitude")
 
+    elevation_gain = activity.get("elevationGain", None)
+    elevation_loss = activity.get("elevationLoss", None)
+    aerobic_training_effect = activity.get("aerobicTrainingEffect", None)
+    anaerobic_training_effect = activity.get("anaerobicTrainingEffect", None)
+    training_stress_score = activity.get("trainingStressScore", None)
+    normalized_power = activity.get("normalizedPower", None)
+    avg_power = activity.get("avgPower", None)
+    max_power = activity.get("maxPower", None)
+    total_steps = activity.get("steps", None)
+
     cursor.execute(
         sql_insert,
         (
@@ -131,6 +160,15 @@ for activity in activities:
             start_latitude,
             start_longitude,
             workout_date,
+            elevation_gain,
+            elevation_loss,
+            aerobic_training_effect,
+            anaerobic_training_effect,
+            training_stress_score,
+            normalized_power,
+            avg_power,
+            max_power,
+            total_steps,
         )
     )
 

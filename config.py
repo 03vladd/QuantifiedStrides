@@ -36,3 +36,5 @@ DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_NAME = os.environ.get("DB_NAME", "quantifiedstrides")
 DB_USER = _require("DB_USER")
 DB_PASSWORD = _require("DB_PASSWORD")
+
+ANTHROPIC_API_KEY = _require("ANTHROPIC_API_KEY")
