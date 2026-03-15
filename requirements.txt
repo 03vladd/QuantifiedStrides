@@ -1,3 +1,11 @@
+# Data pipeline
 garminconnect
 psycopg2-binary
 requests
+
+# FastAPI backend
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+pydantic-settings
