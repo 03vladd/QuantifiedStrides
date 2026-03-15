@@ -41,12 +41,12 @@ class ExerciseSuggestionSchema(BaseModel):
     note: str | None
     pattern: str | None
     quality: str | None
-    last_done: str | None       # formatted string e.g. "3 days ago"
+    last_done: date | str | None
 
 
 class GymRecSchema(BaseModel):
     intensity: str | None
-    focus: str | None
+    focus: list[str] | None
     focus_label: str | None
     why: str | None
     session_type: Literal["upper", "lower"] | None
@@ -57,7 +57,7 @@ class RecommendationSchema(BaseModel):
     primary: str                # e.g. "Upper Gym + Z2 Bike"
     intensity: str | None       # e.g. "moderate"
     duration: str | None        # e.g. "60-75 min"
-    why: list[str]
+    why: str | None
     avoid: list[str]
     notes: list[str]
     blocks: dict[str, str]      # sport_key → reason blocked
@@ -87,7 +87,7 @@ class SleepSummarySchema(BaseModel):
 
 class WeatherSchema(BaseModel):
     temp: float | None          # °C
-    rain: bool | None           # precipitation > 0
+    rain: float | None           # precipitation > 0
     wind: float | None          # m/s
 
 

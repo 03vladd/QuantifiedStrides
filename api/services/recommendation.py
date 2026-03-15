@@ -53,7 +53,7 @@ class RecommendationService:
             primary=rec_raw.get("primary", ""),
             intensity=rec_raw.get("intensity"),
             duration=rec_raw.get("duration"),
-            why=rec_raw.get("why", []),
+            why=rec_raw.get("why"),
             avoid=rec_raw.get("avoid", []),
             notes=rec_raw.get("notes", []),
             blocks=rec_raw.get("blocks", {}),
