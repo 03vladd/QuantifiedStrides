@@ -15,13 +15,66 @@ from api.schemas.strength import (
     ExerciseSchema,
     OneRMPointSchema,
     StrengthExerciseSchema,
+    StrengthSessionCreateSchema,
     StrengthSessionListItemSchema,
     StrengthSessionSchema,
     StrengthSetSchema,
+    StrengthWorkoutSchema,
 )
 
 
 class StrengthService:
+
+    # ------------------------------------------------------------------
+    # Merged Garmin workouts + logged sessions
+    # ------------------------------------------------------------------
+
+    async def list_garmin_sessions(
+        self, db: AsyncSession, user_id: int, days: int = 90
+    ) -> list[StrengthWorkoutSchema]:
+        result = await db.execute(text("""
+            SELECT
+                w.workout_id,
+                w.workout_date,
+                w.start_time,
+                w.end_time,
+                w.calories_burned,
+                ss.session_id,
+                ss.session_type,
+                COUNT(DISTINCT se.exercise_id) AS total_exercises,
+                COUNT(st.set_id)               AS total_sets
+            FROM workouts w
+            LEFT JOIN strength_sessions ss
+                   ON ss.user_id = w.user_id
+                  AND ss.session_date = w.workout_date
+            LEFT JOIN strength_exercises se ON se.session_id = ss.session_id
+            LEFT JOIN strength_sets st      ON st.exercise_id = se.exercise_id
+            WHERE w.user_id = :user_id
+              AND w.sport = 'strength_training'
+              AND w.workout_date >= CURRENT_DATE - (:days * INTERVAL '1 day')
+            GROUP BY
+                w.workout_id, w.workout_date, w.start_time, w.end_time,
+                w.calories_burned, ss.session_id, ss.session_type
+            ORDER BY w.workout_date DESC
+        """), {"user_id": user_id, "days": days})
+
+        rows = result.fetchall()
+        out = []
+        for row in rows:
+            duration = None
+            if row.start_time and row.end_time:
+                duration = round((row.end_time - row.start_time).total_seconds() / 60, 0)
+            out.append(StrengthWorkoutSchema(
+                workout_id=row.workout_id,
+                workout_date=row.workout_date,
+                duration_min=duration,
+                calories=row.calories_burned,
+                session_id=row.session_id,
+                session_type=row.session_type,
+                total_exercises=row.total_exercises,
+                total_sets=row.total_sets,
+            ))
+        return out
 
     # ------------------------------------------------------------------
     # Session list
@@ -138,6 +191,78 @@ class StrengthService:
             )
             for row in result.fetchall()
         ]
+
+    # ------------------------------------------------------------------
+    # Session creation (manual log)
+    # ------------------------------------------------------------------
+
+    async def create_session(
+        self, db: AsyncSession, user_id: int, payload: StrengthSessionCreateSchema
+    ) -> StrengthSessionSchema:
+        # Upsert session (one per user per date)
+        result = await db.execute(text("""
+            INSERT INTO strength_sessions (user_id, session_date, session_type, raw_notes)
+            VALUES (:user_id, :session_date, :session_type, :raw_notes)
+            ON CONFLICT (user_id, session_date) DO UPDATE SET
+                session_type = EXCLUDED.session_type,
+                raw_notes    = EXCLUDED.raw_notes
+            RETURNING session_id
+        """), {
+            "user_id": user_id,
+            "session_date": payload.session_date,
+            "session_type": payload.session_type,
+            "raw_notes": payload.raw_notes,
+        })
+        session_id = result.fetchone().session_id
+
+        # Replace exercises
+        await db.execute(text(
+            "DELETE FROM strength_exercises WHERE session_id = :sid"
+        ), {"sid": session_id})
+
+        for ex in payload.exercises:
+            ex_result = await db.execute(text("""
+                INSERT INTO strength_exercises (session_id, exercise_order, name, notes)
+                VALUES (:sid, :order, :name, :notes)
+                RETURNING exercise_id
+            """), {
+                "sid": session_id,
+                "order": ex.exercise_order,
+                "name": ex.name,
+                "notes": ex.notes,
+            })
+            exercise_id = ex_result.fetchone().exercise_id
+
+            for s in ex.sets:
+                await db.execute(text("""
+                    INSERT INTO strength_sets (
+                        exercise_id, set_number, reps, duration_seconds,
+                        weight_kg, is_bodyweight, band_color,
+                        per_hand, per_side, plus_bar,
+                        weight_includes_bar, total_weight_kg
+                    ) VALUES (
+                        :exercise_id, :set_number, :reps, :duration_seconds,
+                        :weight_kg, :is_bodyweight, :band_color,
+                        :per_hand, :per_side, :plus_bar,
+                        :weight_includes_bar, :total_weight_kg
+                    )
+                """), {
+                    "exercise_id": exercise_id,
+                    "set_number": s.set_number,
+                    "reps": s.reps,
+                    "duration_seconds": s.duration_seconds,
+                    "weight_kg": s.weight_kg,
+                    "is_bodyweight": s.is_bodyweight,
+                    "band_color": s.band_color,
+                    "per_hand": s.per_hand,
+                    "per_side": s.per_side,
+                    "plus_bar": s.plus_bar,
+                    "weight_includes_bar": s.weight_includes_bar,
+                    "total_weight_kg": s.total_weight_kg,
+                })
+
+        await db.commit()
+        return await self.get_session_detail(db, user_id, session_id)
 
     # ------------------------------------------------------------------
     # 1RM progression (Epley formula)

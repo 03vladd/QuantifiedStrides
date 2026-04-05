@@ -41,6 +41,12 @@ class WorkoutReflectionCreateSchema(BaseModel):
     session_rpe: int = Field(ge=1, le=10)
     session_quality: int = Field(ge=1, le=10)
     notes: str | None = None
+    load_feel: int | None = Field(default=None, ge=-2, le=2)
+    """
+    Perceived load vs expectation.
+    -2 = much too easy, -1 = slightly easy, 0 = just right,
+     1 = slightly hard,  2 = too hard.
+    """
 
 
 class WorkoutReflectionSchema(BaseModel):
@@ -50,6 +56,7 @@ class WorkoutReflectionSchema(BaseModel):
     session_rpe: int
     session_quality: int
     notes: str | None
+    load_feel: int | None
 
 
 # ---------------------------------------------------------------------------
@@ -83,5 +90,6 @@ class JournalHistoryRowSchema(BaseModel):
     going_out: bool | None
     rpe: int | None
     session_quality: int | None
+    load_feel: int | None
     reflection_notes: str | None
     journal_note: str | None

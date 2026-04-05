@@ -1,0 +1,119 @@
+Interval Training, Rep Training, and VO2 Max: What They Actually Mean
+
+Runners hear the same advice all the time: do your intervals, hit your VO2 max work, build speed. But those phrases are often thrown around without much explanation. Are intervals the same as reps? Is VO2 max just the number on your Garmin watch? What do Jack Daniels’ I-Pace and R-Pace actually mean? And what is really happening inside the body when you do these sessions?
+
+This guide brings that language, purpose, and physiology together in a way that makes the roles of interval and repetition training clear. The goal is to help runners understand how each pace develops different systems, where VO2 max work fits into a training plan, and how to use these workouts without burning out.
+
+Why the Language Gets Confusing
+
+Distance running uses far too many overlapping terms. Interval training and repetition training are described differently across systems, but in broad terms they both sit in the highest intensity range of most training models.
+
+In a three-zone model, both belong in Zone 3. In a five-zone model, they generally sit in Zone 5. On an RPE scale, they feel like about 9 to 10 out of 10. Lactate rises sharply, and heart rate often climbs into the 88–95 percent range of maximum, depending on the workout and the athlete.
+
+Even though they live in roughly the same broad intensity category, interval and rep work are not the same thing. They target different adaptations.
+
+Interval Pace Versus Repetition Pace
+
+In Jack Daniels’ system, I-Pace refers to interval pace. This is the pace designed to stress and improve VO2 max, which is your aerobic ceiling. These reps usually last about three to five minutes. Recovery is generally a jog and can vary based on training phase and purpose. The main goal is to raise aerobic capacity. The sensation should feel hard but controlled.
+
+R-Pace refers to repetition pace. This is used less for aerobic development and more for neuromuscular economy, speed, coordination, and efficiency. These reps are usually short, often ninety seconds or less unless an athlete is specifically training for events like the mile or 3K. Recovery is typically full or close to full so that each rep can be done with quality. The sensation should feel fast and smooth.
+
+A simple way to think about it is this: interval pace builds the engine, while repetition pace tunes the chassis.
+
+What VO2 Max Actually Means
+
+VO2 max is simply a shorthand for maximal oxygen consumption. In practical terms, it is a measure of the body’s capacity to take in, transport, and use oxygen during intense exercise. You can think of it as the body’s horsepower rating.
+
+Interval training is designed to train that horsepower. Repetition work is designed to help you use speed more efficiently.
+
+The Physiology in Plain English
+
+To understand the difference, imagine your body’s lactate curve. Easy running sits well below the first major threshold. Tempo work sits around the second threshold or just below it. Interval training takes you above that threshold and pushes the heart, lungs, and oxygen delivery system close to their limit. Repetition work goes even sharper and shorter, but the purpose is not mainly lactate accumulation. Instead, it is about stiffness, power, stride mechanics, and coordination.
+
+During I-Pace workouts, heart rate tends to stabilize at a very high percentage of max. Breathing is hard but rhythmic. You are stressing your aerobic ceiling and improving your ability to sustain high oxygen consumption.
+
+During R-Pace workouts, the reps are often too short to create the same kind of sustained VO2 max exposure, especially early in the workout. Instead, the emphasis is on movement quality, speed, economy, and form.
+
+Put simply, intervals help build the capacity to go fast, while reps help your body use that speed well.
+
+Why Daniels’ System Still Matters
+
+Jack Daniels did not invent training paces by guesswork. He built them through years of physiological testing, including oxygen-consumption measurements, lactate testing, and race-performance analysis. What made his system so useful was that he translated lab science into something coaches and athletes could use in the real world.
+
+That is why Daniels’ framework has stayed influential for so long. It provides guardrails that keep workouts purposeful.
+
+Some of those guardrails are especially important.
+
+For I-Pace, total quality volume should generally stay fairly small, often around eight to fifteen minutes for most runners, though advanced athletes can sometimes handle a little more.
+
+For R-Pace, total volume should be smaller still, often around one to two kilometers of fast work unless the athlete is specifically preparing for short middle-distance events.
+
+Recovery also differs between the two. R-Pace usually needs more complete recovery so that each rep can be done with excellent form and speed. I-Pace can use shorter recovery periods because the goal is repeated exposure to a high aerobic state rather than perfect top-end mechanics.
+
+The point is not to suffer for the sake of suffering. The point is to hit the right physiological window and stay consistent over time.
+
+How to Find Your Paces
+
+The easiest starting point is the Daniels VDOT calculator. Plug in a recent race result and it will estimate your training paces.
+
+That gives you a useful baseline, but pace should not be treated as absolute. It works best when combined with effort and context.
+
+For I-Pace, think of an effort you could race all out for around ten to twelve minutes. That often corresponds roughly to somewhere between 3K and 5K race pace depending on the athlete. In Daniels’ framework, interval pace usually falls in that range.
+
+For R-Pace, many coaches use mile pace or a slightly faster effort than I-Pace. For some athletes, especially masters runners or newer runners, those two can end up fairly close, so the prescription has to be handled carefully.
+
+Environment matters as well. If you move from sea level to altitude, you would obviously adjust your pace. The same logic should apply to heat, humidity, snow, poor footing, or wind. Do not become a slave to the watch. Chase the intended physiological stimulus, not a number.
+
+That is why triangulating with effort matters so much. I-Pace should feel like a sustainable but very hard effort for around ten to twelve minutes. R-Pace should feel fast, sharp, and smooth, with enough recovery that you can maintain quality.
+
+The Biggest Mistakes Runners Make
+
+One of the most common mistakes is racing interval workouts. The goal of an I-Pace session is not to run one brilliant rep and then implode. The goal is repeated quality exposure. Most reps should stay within a very tight range of each other. If the first one is dramatically faster than the last, the workout was probably paced poorly.
+
+Another common error is mismatched recovery. Group workouts often assign the same recovery to everyone, even if one runner covers the rep in three minutes and another in six. That creates completely different sessions for each athlete. Recovery must match the person, not just the spreadsheet.
+
+A third mistake appears in repetition work. Many runners force R-Pace by tensing up, clenching their fists, tightening their shoulders, and over-rotating. That defeats the purpose. Repetition work is supposed to improve mechanics and efficiency. If you are muscling your way through it, you are losing the very quality you are trying to train.
+
+The final major mistake is stacking too much intensity. Many enthusiastic runners do a tempo workout, then an interval workout, then a marathon-pace long run, all within a few days. That creates too much intensity without enough aerobic support underneath it.
+
+The training pyramid should be built from the bottom up. Easy running and everything below threshold form the wide base. Intensity sits at the top. If the base is too small, the whole system becomes unstable. Too many runners rush toward intensity because easy running does not feel impressive, but the foundation is what allows intensity to work.
+
+Why Progression Matters
+
+Another issue is the lack of progression in workouts. Some runners repeat the same sessions over and over, then start racing them in training to prove fitness. If they ran a workout at one pace last month, they feel pressure to go faster this month.
+
+That turns the session into a test instead of a tool.
+
+Workouts should progress in a purposeful way. The progression should match the athlete’s phase of training, physiological needs, and psychological readiness. The goal is to build fitness, not constantly prove it before race day.
+
+Example Interval and Rep Workouts
+
+Early in a build, fartlek-style interval work can be very useful. One example is ten times sixty seconds at I-Effort with forty seconds at easy pace. This works well because it teaches pacing, gives a coach insight into how an athlete responds, and is accessible even when athletes are coming back from downtime or building into harder work.
+
+As the build progresses, more classic interval sessions can come in, such as five by one kilometer, four by 1200 meters, or eight by 800 meters. These sessions can be excellent for developing aerobic power, but their effectiveness depends heavily on choosing the right pace and the right recovery for the athlete.
+
+For repetition work, strides are often enough for marathoners and longer-distance athletes. But when more formal R-Pace sessions are appropriate, workouts like ten to twelve by 400 meters can be useful. Another demanding option for athletes specifically training for shorter races is three to four by 800 meters at repetition pace with long recoveries. It is a tough session, but it can reveal a lot about mile fitness.
+
+Where These Workouts Fit in the Week
+
+For many athletes outside a marathon-specific block, a basic weekly structure might look like this: long run on Sunday, tempo on Tuesday, and interval or repetition work on Friday. That spacing tends to allow enough recovery while still keeping the athlete close enough to training stress to get good adaptation.
+
+For athletes focused more on events like the 3K, 5K, or specific phases of a half-marathon build, it can make sense to use both an I-Pace and an R-Pace session in the same week, often separated by several days.
+
+In general, most runners only need about eight to fifteen minutes of total I-Pace quality work in a session, though advanced athletes may go higher. R-Pace usually stays around one to two kilometers of total fast work unless the athlete is preparing for shorter track events.
+
+How It All Fits Together
+
+Each pace in training plays a different role.
+
+Easy running and marathon pace build aerobic development and durability. They are the bread and butter, especially easy pace.
+
+Tempo work teaches pace control and improves threshold.
+
+Intervals build aerobic capacity and raise the ceiling.
+
+Repetitions improve efficiency, coordination, and mechanics.
+
+When all of those pieces are used appropriately, they create a complete system. No single pace does everything. But together, they unlock better performance.
+
+The key is to understand the purpose of each session, stay consistent, and stop trying to turn every workout into a race.

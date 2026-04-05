@@ -3,30 +3,24 @@ Database and auth dependency injection for FastAPI.
 
 Provides:
   get_db()             — async SQLAlchemy session
-  get_current_user_id()— extracts user_id from X-User-Id header
-                         (dev convenience; swap for JWT decode in production)
-
-Usage in a router:
-    @router.get("/")
-    async def my_endpoint(
-        db: AsyncSession = Depends(get_db),
-        user_id: int = Depends(get_current_user_id),
-    ):
-        ...
+  get_current_user_id()— decodes user_id from JWT Bearer token
 """
 
 from collections.abc import AsyncGenerator
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from api.services.auth import decode_token
 from api.settings import settings
 
 engine = create_async_engine(
     settings.database_url,
     pool_size=20,
     max_overflow=10,
-    pool_pre_ping=True,   # drop stale connections before use
+    pool_pre_ping=True,
     echo=settings.db_echo,
 )
 
@@ -37,19 +31,18 @@ AsyncSessionLocal = async_sessionmaker(
     autocommit=False,
 )
 
+_bearer = HTTPBearer()
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
 
 
-async def get_current_user_id(x_user_id: int = Header(...)) -> int:
-    """
-    Extracts the authenticated user_id from the X-User-Id request header.
-
-    Development: send `X-User-Id: 1` in every request.
-    Production:  replace this function body with JWT token decoding.
-    """
-    if x_user_id < 1:
-        raise HTTPException(status_code=401, detail="Invalid user identity")
-    return x_user_id
+async def get_current_user_id(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> int:
+    try:
+        return decode_token(credentials.credentials)
+    except (JWTError, Exception):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")

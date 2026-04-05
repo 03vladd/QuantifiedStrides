@@ -26,6 +26,18 @@ class Settings(BaseSettings):
     # API
     api_cors_origins: list[str] = ["http://localhost:5173"]   # Vite default port
 
+    # Email
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "QuantifiedStrides <noreply@quantifiedstrides.com>"
+
+    # JWT
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    jwt_expire_days: int = 30
+
     # Anthropic
     anthropic_api_key: str
 

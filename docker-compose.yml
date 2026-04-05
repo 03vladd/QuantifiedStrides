@@ -1,0 +1,17 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: quantifiedstrides_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quantifiedstrides
+      POSTGRES_USER: quantified
+      POSTGRES_PASSWORD: "2026"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
+
+volumes:
+  pgdata:

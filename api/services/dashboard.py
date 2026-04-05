@@ -26,9 +26,10 @@ from api.services.training_load import TrainingLoadService
 from api.services.recovery import RecoveryService
 from api.services.alerts import AlertsService
 from api.services.recommendation import RecommendationService
+from api.services.narrative import generate_narrative
 
 from db import get_connection
-from recommend import get_last_nights_sleep, get_latest_weather, get_recent_load
+from recommend import get_last_nights_sleep, get_latest_weather, get_recent_load, get_recent_load_by_sport
 
 
 class DashboardService:
@@ -39,28 +40,38 @@ class DashboardService:
         self._alerts         = AlertsService()
         self._recommendation = RecommendationService()
 
-    async def get_dashboard(self, user_id: int, today: date) -> DashboardSchema:
+    async def get_dashboard(self, user_id: int, today: date, db=None) -> DashboardSchema:
         # ── 1. Training load (needed by alerts + recommendation) ──────────────
-        tl_raw, tl_schema = await self._training_load.get_metrics(today)
+        tl_raw, tl_schema = await self._training_load.get_metrics(today, user_id)
 
         # ── 2. Recovery (HRV + muscle freshness) — independent of load ────────
         (hrv_raw, hrv_schema), freshness_schema = await asyncio.gather(
-            self._recovery.get_hrv_status(today),
-            self._recovery.get_muscle_freshness(today),
+            self._recovery.get_hrv_status(today, user_id),
+            self._recovery.get_muscle_freshness(today, user_id),
         )
 
         # ── 3. Recommendation (also surfaces readiness for alerts) ─────────────
         readiness_raw, rec_schema = await self._recommendation.get_recommendation(
-            today, tl_raw
+            today, tl_raw, user_id
         )
 
         # ── 4. Alerts (needs tl, hrv, and readiness from step 3) ──────────────
-        alerts = await self._alerts.get_alerts(today, tl_raw, hrv_raw, readiness_raw)
+        alerts = await self._alerts.get_alerts(today, tl_raw, hrv_raw, readiness_raw, user_id=user_id)
 
         # ── 5. Contextual data (sleep summary, weather, recent load) ──────────
         sleep_schema, weather_schema, recent_load_schema = await asyncio.to_thread(
-            self._get_context, today
+            self._get_context, today, user_id
         )
+
+        # ── 6. Claude narrative (RAG-grounded, non-critical) ──────────────────
+        if db is not None:
+            narrative_context = {
+                "tsb":               tl_raw.get("tsb"),
+                "hrv_status":        hrv_raw.get("status") if hrv_raw else None,
+                "sleep_score":       sleep_schema.score if sleep_schema else None,
+                "readiness_overall": readiness_raw.get("overall") if readiness_raw else None,
+            }
+            rec_schema.narrative = await generate_narrative(rec_schema, narrative_context, db, user_id=user_id, today=today)
 
         return DashboardSchema(
             date=today,
@@ -80,25 +91,21 @@ class DashboardService:
     # ------------------------------------------------------------------
 
     def _get_context(
-        self, today: date
+        self, today: date, user_id: int = 1
     ) -> tuple[SleepSummarySchema | None, WeatherSchema | None, RecentLoadSchema]:
         conn = get_connection()
         try:
             cur = conn.cursor()
-            sleep   = get_last_nights_sleep(cur, today)
+            sleep   = get_last_nights_sleep(cur, today, user_id)
             weather = get_latest_weather(cur)
-            load    = get_recent_load(cur, today)
+            load    = get_recent_load_by_sport(cur, today, user_id=user_id)
         finally:
             conn.close()
 
         return (
             self._map_sleep(sleep),
             self._map_weather(weather),
-            RecentLoadSchema(
-                run_km=load.get("run_km", 0.0),
-                bike_min=load.get("bike_min", 0.0),
-                climb_sessions=load.get("climb_sessions", 0),
-            ),
+            RecentLoadSchema(by_sport=load),
         )
 
     # ------------------------------------------------------------------

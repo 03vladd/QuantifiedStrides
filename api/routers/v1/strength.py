@@ -6,8 +6,10 @@ from api.schemas.strength import (
     ExerciseCreateSchema,
     ExerciseSchema,
     OneRMPointSchema,
+    StrengthSessionCreateSchema,
     StrengthSessionListItemSchema,
     StrengthSessionSchema,
+    StrengthWorkoutSchema,
 )
 from api.services.strength import StrengthService
 
@@ -19,6 +21,15 @@ _svc = StrengthService()
 # Sessions
 # ------------------------------------------------------------------
 
+@router.get("/workouts", response_model=list[StrengthWorkoutSchema])
+async def list_garmin_sessions(
+    days: int = Query(default=90, ge=7, le=365),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    return await _svc.list_garmin_sessions(db, user_id, days)
+
+
 @router.get("/sessions", response_model=list[StrengthSessionListItemSchema])
 async def list_sessions(
     days: int = Query(default=90, ge=7, le=365),
@@ -26,6 +37,15 @@ async def list_sessions(
     user_id: int = Depends(get_current_user_id),
 ):
     return await _svc.list_sessions(db, user_id, days)
+
+
+@router.post("/sessions", response_model=StrengthSessionSchema, status_code=201)
+async def create_session(
+    payload: StrengthSessionCreateSchema,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    return await _svc.create_session(db, user_id, payload)
 
 
 @router.get("/sessions/{session_id}", response_model=StrengthSessionSchema)

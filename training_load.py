@@ -27,7 +27,7 @@ from datetime import timedelta
 _ZONE_WEIGHTS = [1.0, 1.5, 2.0, 3.0, 4.0]   # zones 1-5
 
 
-def _trimp_for_date(cur, d):
+def _trimp_for_date(cur, d, user_id=1):
     """
     Sum HR-zone-weighted training load across all Garmin workouts on date d.
     time_in_hr_zone_* is stored in seconds.
@@ -37,8 +37,8 @@ def _trimp_for_date(cur, d):
         SELECT time_in_hr_zone_1, time_in_hr_zone_2, time_in_hr_zone_3,
                time_in_hr_zone_4, time_in_hr_zone_5
         FROM workouts
-        WHERE user_id = 1 AND workout_date = %s
-    """, (d,))
+        WHERE user_id = %s AND workout_date = %s
+    """, (user_id, d,))
 
     rows = cur.fetchall()
     trimp = 0.0
@@ -54,8 +54,8 @@ def _trimp_for_date(cur, d):
             FROM strength_sessions ss
             JOIN strength_exercises se ON se.session_id = ss.session_id
             JOIN strength_sets st ON st.exercise_id = se.exercise_id
-            WHERE ss.user_id = 1 AND ss.session_date = %s
-        """, (d,))
+            WHERE ss.user_id = %s AND ss.session_date = %s
+        """, (user_id, d,))
         row = cur.fetchone()
         sets = row[0] if row else 0
         trimp = sets * 2.5   # rough: ~2.5 TRIMP per set ≈ 40 TRIMP for 16-set session
@@ -63,7 +63,7 @@ def _trimp_for_date(cur, d):
     return trimp
 
 
-def get_metrics(cur, today, lookback=120):
+def get_metrics(cur, today, lookback=120, user_id=1):
     """
     Compute CTL, ATL, TSB as of `today` using `lookback` days of history.
 
@@ -81,7 +81,7 @@ def get_metrics(cur, today, lookback=120):
 
     d = today - timedelta(days=lookback)
     while d <= today:
-        load = _trimp_for_date(cur, d)
+        load = _trimp_for_date(cur, d, user_id)
         ctl  = ctl * (1 - k_ctl) + load * k_ctl
         atl  = atl * (1 - k_atl) + load * k_atl
         d   += timedelta(days=1)
@@ -91,12 +91,12 @@ def get_metrics(cur, today, lookback=120):
     atl_7ago = 0.0
     d = today - timedelta(days=lookback)
     while d <= today - timedelta(days=7):
-        load    = _trimp_for_date(cur, d)
+        load    = _trimp_for_date(cur, d, user_id)
         ctl_7ago = ctl_7ago * (1 - k_ctl) + load * k_ctl
         atl_7ago = atl_7ago * (1 - k_atl) + load * k_atl
         d += timedelta(days=1)
 
-    today_load = _trimp_for_date(cur, today)
+    today_load = _trimp_for_date(cur, today, user_id)
 
     return {
         "ctl":        round(ctl, 1),
@@ -107,7 +107,7 @@ def get_metrics(cur, today, lookback=120):
     }
 
 
-def get_history(cur, today, days=90):
+def get_history(cur, today, days=90, user_id=1):
     """Return list of dicts with date/load/ctl/atl/tsb for the past `days` days."""
     k_ctl = 1 / 42
     k_atl = 1 / 7
@@ -116,7 +116,7 @@ def get_history(cur, today, days=90):
     history = []
     d = start
     while d <= today:
-        load = _trimp_for_date(cur, d)
+        load = _trimp_for_date(cur, d, user_id)
         ctl  = ctl * (1 - k_ctl) + load * k_ctl
         atl  = atl * (1 - k_atl) + load * k_atl
         if d >= today - timedelta(days=days):
@@ -127,16 +127,16 @@ def get_history(cur, today, days=90):
     return history
 
 
-def get_hrv_history(cur, today, days=30):
+def get_hrv_history(cur, today, days=30, user_id=1):
     """Return list of dicts with date/hrv/baseline/rhr/sleep_score."""
     start = today - timedelta(days=days + 10)
     cur.execute("""
         SELECT sleep_date, overnight_hrv, rhr, sleep_score
         FROM sleep_sessions
-        WHERE user_id = 1 AND sleep_date BETWEEN %s AND %s
+        WHERE user_id = %s AND sleep_date BETWEEN %s AND %s
           AND overnight_hrv IS NOT NULL
         ORDER BY sleep_date
-    """, (start, today))
+    """, (user_id, start, today))
     rows = cur.fetchall()
     result = []
     for i, (d, hrv, rhr, score) in enumerate(rows):

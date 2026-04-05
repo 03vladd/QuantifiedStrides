@@ -1,0 +1,73 @@
+A Coach’s Guide to Plyometric Training
+
+This guide explains plyometric training across a full spectrum of exercises organized by ground contact time. Rather than treating all jumps as the same, it is more useful to understand that different exercises sit at different places on a continuum running from maximal strength to maximal reactivity. At one end are slow, force-dominant movements. At the other end is sprinting, which represents the shortest ground contact times and the highest reactive demands.
+
+Understanding this spectrum helps clarify what each category of training is actually doing, what adaptations it produces, and how to choose the right exercises for a given athlete or goal.
+
+The Plyometric Spectrum
+
+The spectrum begins with maximal strength, moves through jump training, then slow stretch-shortening cycle work, then fast stretch-shortening cycle work, and finally ends with maximal reactivity. Each category differs primarily in how much time the athlete spends on the ground and how much the body relies on muscular force production versus elastic energy storage and release.
+
+Max Strength Training
+
+Max strength training sits at the longest end of the spectrum. Exercises such as heavy squats, split squats, and trap bar deadlifts fall into this category. These movements have contraction times of roughly 0.7 to 3 seconds, which means they are much slower than traditional plyometrics.
+
+At this end of the spectrum, elastic mechanisms contribute very little. Force is produced mainly through voluntary motor unit recruitment, muscle size, and neural drive. In simple terms, the muscles are doing the work directly rather than relying on the tendons to store and release energy.
+
+This kind of training does not directly improve the tendon’s ability to behave like a spring. Instead, it develops the force capacity that supports everything else. That is why maximal strength is still foundational. If an athlete does not have enough force to begin with, they cannot express force quickly later. Stronger athletes tend to respond better to plyometric training and often have a higher long-term ceiling.
+
+Jump Training
+
+The next part of the spectrum is jump training, with contraction or ground contact times of about 500 to 700 milliseconds. Examples include box jumps, broad jumps, yielding split jumps, oscillatory jumps, and loaded jumps.
+
+Despite having “jump” in the name, these are not truly plyometrics in the strict sense, because the ground contact times are too long and the movement relies more on active muscular force than on elastic rebound. The athlete is still producing force quickly, but the tendon-driven spring behavior is not being emphasized to the same degree.
+
+The main adaptations here include improvements in rate of force development, especially early force production, along with better eccentric strength and force absorption through landing mechanics. This type of work can help with projection, intent, and coordination, but if it is the only explosive training an athlete does, it may not transfer as well as expected to sprint speed or maximal jump performance.
+
+These exercises are useful, but they should not be mistaken for the same thing as short-contact reactive plyometrics.
+
+Slow Stretch-Shortening Cycle Work
+
+The next zone is the slow stretch-shortening cycle, with ground contact times of roughly 250 to 500 milliseconds. This is where movements begin to involve a stronger stretch-shortening effect. Exercises in this category include maximal bounding, single-leg hopping, countermovement jumps, high hurdle hops, and some depth jumps.
+
+This is where things become especially interesting because longer contact times can begin to reduce the quality of the stretch-shortening cycle. If an athlete spends too much time on the ground, the elastic storage and release process becomes less tightly linked. In practice, this means the body shifts from smooth tendon-driven recoil toward more active muscular effort.
+
+A depth jump provides a good example. If the athlete lands and rebounds in under about 0.25 seconds, the movement becomes highly ankle-dominant, with little motion at the knee or hip. The Achilles tendon does much of the work, and the movement emphasizes reactive tendon stiffness. But if the athlete spends more time on the ground and sinks deeper to try to jump higher, then the movement becomes more muscular. The athlete has to absorb force and then re-create it rather than smoothly recycling stored elastic energy.
+
+That is not always bad. In fact, these longer-contact, forceful movements can be extremely useful for improving acceleration and change of direction, especially in sports where those qualities matter more than maximal top-end speed. This zone can also improve active force production and the ability to handle larger eccentric loads.
+
+In practice, this kind of training might make up a smaller but meaningful part of a broader plyometric program, depending on whether the athlete needs more force-driven or more elastic adaptations.
+
+Fast Stretch-Shortening Cycle Work
+
+Fast stretch-shortening cycle work is what many coaches mean when they say “true plyometrics.” Ground contact times here are roughly 100 to 250 milliseconds. Exercises include drop jumps, pogo hops, certain hurdle hops, and some forms of bounding and skipping.
+
+In this zone, the stretch-shortening cycle stays tightly coupled. There is rapid loading followed immediately by elastic recoil, with very little pause in between. This allows the tendon and nervous system to do much of the work, provided the athlete is coached correctly.
+
+The main adaptations here include increased tendon stiffness, improved ability to store and release energy, a faster transition from braking to propulsion, and better pre-activation. Pre-activation refers to how much the muscles prepare themselves before impact. This is crucial because it allows the body to produce force quickly when the foot hits the ground.
+
+Plyometric training in this zone also teaches the nervous system to act earlier and more efficiently. Over time, athletes become better at preparing for ground contact, reaching peak activation sooner, and producing more force in less time. That is one reason this style of work can improve sprinting and jumping performance so effectively.
+
+To get the most out of fast stretch-shortening cycle plyometrics, athletes need high intent, low fatigue, and sensible volume. Coaching matters a lot. Some athletes are naturally more muscular and force-driven, so when they attempt reactive work they unconsciously turn it into slower, more forceful movement. A useful coaching strategy can be to cue reduced effort first, such as sixty percent, then seventy, then eighty percent, to help the athlete stay elastic instead of overpowering the drill.
+
+Maximal Reactivity
+
+At the extreme end of the spectrum is maximal reactivity, with ground contact times under 100 milliseconds. Sprinting is the clearest example.
+
+At this speed, there is essentially no time to produce large amounts of force voluntarily after the foot hits the ground. Instead, force output depends heavily on pre-activation, tendon stiffness, and rapid reflexive recruitment. Much of what determines sprint performance is happening before contact even occurs.
+
+A key concept here is that during maximal sprinting, the muscles are not lengthening and shortening dramatically in the way they do during a lift or a slower jump. Instead, the muscle behaves almost isometrically while the tendon undergoes most of the length change. In the calf complex, for example, the Achilles tendon can lengthen dramatically compared with the actual muscle fascicles. This allows elite sprinters to tolerate and return enormous forces with only minimal visible bend at the joints.
+
+This is one reason calf strength matters so much. High-quality calf raises can build a strong base, but more specific isometric work, such as ankle isometric pushes and switch variations, may carry over even more directly to sprinting because they train force at the joint angles and stiffness levels that sprinting demands.
+
+Still, there is no substitute for sprinting itself. Maximal reactivity is highly specific, and athletes need consistent, progressive sprint exposure if they want to improve this quality.
+
+How to Think About the Whole Spectrum
+
+Looking back at the full spectrum, each category has a clear role.
+
+Max strength builds the force foundation. Jump training teaches athletes how to create and absorb force. Slow stretch-shortening cycle work develops more forceful elastic ability, especially for acceleration and change of direction. Fast stretch-shortening cycle work improves tendon stiffness, elastic rebound, and reactive performance. Maximal reactivity, as seen in sprinting, represents the highest-speed expression of those qualities.
+
+None of these categories is automatically best. They are simply tools that create different adaptations. The right balance depends on the athlete’s sport, goals, current deficits, and training background.
+
+The most important takeaway is that plyometric training is not one thing. It is a spectrum. Once that is understood, exercise selection, coaching cues, and programming decisions become much more precise and useful.

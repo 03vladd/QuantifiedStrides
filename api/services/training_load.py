@@ -18,12 +18,12 @@ from training_load import get_metrics, tsb_intensity_hint
 
 class TrainingLoadService:
 
-    async def get_metrics(self, today: date) -> tuple[dict, TrainingLoadSchema]:
+    async def get_metrics(self, today: date, user_id: int = 1) -> tuple[dict, TrainingLoadSchema]:
         """
         Returns the raw metrics dict (passed to AlertsService) and the
         mapped TrainingLoadSchema (used by DashboardService directly).
         """
-        raw = await asyncio.to_thread(self._compute, today)
+        raw = await asyncio.to_thread(self._compute, today, user_id)
         freshness_label, intensity_modifier = tsb_intensity_hint(raw["tsb"])
         schema = TrainingLoadSchema(
             ctl=raw["ctl"],
@@ -40,10 +40,10 @@ class TrainingLoadService:
     # Sync implementation — runs in thread pool
     # ------------------------------------------------------------------
 
-    def _compute(self, today: date) -> dict:
+    def _compute(self, today: date, user_id: int = 1) -> dict:
         conn = get_connection()
         try:
             cur = conn.cursor()
-            return get_metrics(cur, today)
+            return get_metrics(cur, today, user_id=user_id)
         finally:
             conn.close()

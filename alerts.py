@@ -23,16 +23,16 @@ from datetime import timedelta
 # Rolling RHR baseline
 # ---------------------------------------------------------------------------
 
-def _get_rhr_baseline(cur, today, window=7):
+def _get_rhr_baseline(cur, today, window=7, user_id=1):
     start = today - timedelta(days=window + 3)
     cur.execute("""
         SELECT sleep_date, rhr
         FROM sleep_sessions
-        WHERE user_id = 1
+        WHERE user_id = %s
           AND sleep_date BETWEEN %s AND %s
           AND rhr IS NOT NULL
         ORDER BY sleep_date
-    """, (start, today))
+    """, (user_id, start, today))
     rows = cur.fetchall()
     if len(rows) < 3:
         return None, None, None
@@ -50,17 +50,17 @@ def _get_rhr_baseline(cur, today, window=7):
 # Sleep quality cluster
 # ---------------------------------------------------------------------------
 
-def _get_sleep_trend(cur, today, window=3):
+def _get_sleep_trend(cur, today, window=3, user_id=1):
     start = today - timedelta(days=window + 1)
     cur.execute("""
         SELECT sleep_date, sleep_score, duration_minutes
         FROM sleep_sessions
-        WHERE user_id = 1
+        WHERE user_id = %s
           AND sleep_date BETWEEN %s AND %s
           AND sleep_score IS NOT NULL
         ORDER BY sleep_date DESC
         LIMIT %s
-    """, (start, today, window))
+    """, (user_id, start, today, window))
     rows = cur.fetchall()
     if not rows:
         return None, None
@@ -75,15 +75,15 @@ def _get_sleep_trend(cur, today, window=3):
 # Consecutive training days
 # ---------------------------------------------------------------------------
 
-def _consecutive_days(cur, today):
+def _consecutive_days(cur, today, user_id=1):
     count = 0
     d = today - timedelta(days=1)
     for _ in range(14):
         cur.execute("""
-            SELECT 1 FROM workouts WHERE user_id=1 AND workout_date=%s
+            SELECT 1 FROM workouts WHERE user_id=%s AND workout_date=%s
             UNION
-            SELECT 1 FROM strength_sessions WHERE user_id=1 AND session_date=%s
-        """, (d, d))
+            SELECT 1 FROM strength_sessions WHERE user_id=%s AND session_date=%s
+        """, (user_id, d, user_id, d))
         if not cur.fetchone():
             break
         count += 1
@@ -95,7 +95,7 @@ def _consecutive_days(cur, today):
 # Main alert generator
 # ---------------------------------------------------------------------------
 
-def get_alerts(cur, today, tl_metrics, hrv_status, readiness=None):
+def get_alerts(cur, today, tl_metrics, hrv_status, readiness=None, user_id=1):
     """
     Returns a list of (severity, message) tuples, sorted critical → warning → info.
     """
@@ -109,9 +109,9 @@ def get_alerts(cur, today, tl_metrics, hrv_status, readiness=None):
     hrv_dev    = hrv_status.get("deviation")
     hrv_trend  = hrv_status.get("trend")
 
-    last_rhr, rhr_baseline, rhr_delta = _get_rhr_baseline(cur, today)
-    sleep_score_avg, sleep_hrs_avg    = _get_sleep_trend(cur, today)
-    consec                            = _consecutive_days(cur, today)
+    last_rhr, rhr_baseline, rhr_delta = _get_rhr_baseline(cur, today, user_id=user_id)
+    sleep_score_avg, sleep_hrs_avg    = _get_sleep_trend(cur, today, user_id=user_id)
+    consec                            = _consecutive_days(cur, today, user_id)
 
     # --- ACWR (Acute:Chronic Workload Ratio) ---
     acwr = atl / ctl if ctl > 5 else None
@@ -197,7 +197,7 @@ def get_alerts(cur, today, tl_metrics, hrv_status, readiness=None):
     if readiness:
         overall = readiness.get("overall")
         energy  = readiness.get("energy")
-        going_out_last_night = _went_out_last_night(cur, today)
+        going_out_last_night = _went_out_last_night(cur, today, user_id)
 
         if going_out_last_night:
             alerts.append(("warning",
@@ -232,14 +232,14 @@ def get_alerts(cur, today, tl_metrics, hrv_status, readiness=None):
     return alerts
 
 
-def _went_out_last_night(cur, today):
+def _went_out_last_night(cur, today, user_id=1):
     """Check if yesterday's readiness check-in flagged going_out_tonight."""
     from datetime import timedelta
     yesterday = today - timedelta(days=1)
     cur.execute("""
         SELECT going_out_tonight FROM daily_readiness
-        WHERE user_id = 1 AND entry_date = %s
-    """, (yesterday,))
+        WHERE user_id = %s AND entry_date = %s
+    """, (user_id, yesterday,))
     row = cur.fetchone()
     return bool(row and row[0])
 

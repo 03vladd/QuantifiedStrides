@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.settings import settings
-from api.routers.v1 import dashboard, training, sleep, strength, checkin, running
+from api.routers.v1 import auth, dashboard, training, sleep, strength, checkin, running, sync
 
 app = FastAPI(
     title="QuantifiedStrides API",
@@ -38,12 +38,14 @@ app.add_middleware(
 
 _V1 = "/api/v1"
 
+app.include_router(auth.router,      prefix=_V1)
 app.include_router(dashboard.router, prefix=_V1)
 app.include_router(training.router,  prefix=_V1)
 app.include_router(sleep.router,     prefix=_V1)
 app.include_router(strength.router,  prefix=_V1)
 app.include_router(checkin.router,   prefix=_V1)
 app.include_router(running.router,   prefix=_V1)
+app.include_router(sync.router,      prefix=_V1)
 
 
 @app.exception_handler(Exception)

@@ -88,6 +88,53 @@ class ExerciseSchema(BaseModel):
     notes: str | None
 
 
+# ---------------------------------------------------------------------------
+# Merged Garmin workout + logged session view
+# ---------------------------------------------------------------------------
+
+class StrengthWorkoutSchema(BaseModel):
+    workout_id: int
+    workout_date: date
+    duration_min: float | None          # derived from start/end time
+    calories: int | None
+    session_id: int | None              # None = not yet logged
+    session_type: Literal["upper", "lower"] | None
+    total_exercises: int
+    total_sets: int
+
+
+# ---------------------------------------------------------------------------
+# Session creation (manual log)
+# ---------------------------------------------------------------------------
+
+class SetCreateSchema(BaseModel):
+    set_number: int
+    reps: int | None = None
+    duration_seconds: int | None = None
+    weight_kg: float | None = None
+    is_bodyweight: bool = False
+    band_color: str | None = None
+    per_hand: bool = False
+    per_side: bool = False
+    plus_bar: bool = False
+    weight_includes_bar: bool = False
+    total_weight_kg: float | None = None
+
+
+class ExerciseCreateInSessionSchema(BaseModel):
+    exercise_order: int
+    name: str
+    notes: str | None = None
+    sets: list[SetCreateSchema]
+
+
+class StrengthSessionCreateSchema(BaseModel):
+    session_date: date
+    session_type: Literal["upper", "lower"] | None = None
+    raw_notes: str | None = None
+    exercises: list[ExerciseCreateInSessionSchema]
+
+
 class ExerciseCreateSchema(BaseModel):
     name: str
     source: Literal["wger", "custom"] = "custom"

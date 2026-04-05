@@ -37,6 +37,7 @@ class RecommendationService:
         self,
         today: date,
         tl_metrics: dict,
+        user_id: int = 1,
     ) -> tuple[dict | None, RecommendationSchema]:
         """
         Returns (raw_readiness_dict, RecommendationSchema).
@@ -45,7 +46,7 @@ class RecommendationService:
         subjective signals (overall feel, energy, soreness, going_out) into alerts.
         """
         readiness_raw, rec_raw, exercises_raw = await asyncio.to_thread(
-            self._build, today, tl_metrics
+            self._build, today, tl_metrics, user_id
         )
 
         schema = RecommendationSchema(
@@ -81,7 +82,7 @@ class RecommendationService:
     # ------------------------------------------------------------------
 
     def _build(
-        self, today: date, tl_metrics: dict
+        self, today: date, tl_metrics: dict, user_id: int = 1
     ) -> tuple[dict | None, dict, list | None]:
         from datetime import timedelta
 
@@ -90,19 +91,19 @@ class RecommendationService:
             cur = conn.cursor()
             yesterday = today - timedelta(days=1)
 
-            readiness    = get_readiness(cur, today)
-            yday         = get_yesterdays_training(cur, yesterday)
-            sleep        = get_last_nights_sleep(cur, today)
+            readiness    = get_readiness(cur, today, user_id)
+            yday         = get_yesterdays_training(cur, yesterday, user_id)
+            sleep        = get_last_nights_sleep(cur, today, user_id)
             weather      = get_latest_weather(cur)
-            load         = get_recent_load(cur, today)
-            consec       = get_consecutive_training_days(cur, today)
-            gym_analysis = get_gym_analysis(cur, today)
+            load         = get_recent_load(cur, today, user_id=user_id)
+            consec       = get_consecutive_training_days(cur, today, user_id)
+            gym_analysis = get_gym_analysis(cur, today, user_id)
 
             rec_raw = build_recommendation(
                 readiness, yday, sleep, weather, load,
-                consec, gym_analysis, today, tl_metrics,
+                consec, gym_analysis, today, tl_metrics, user_id,
             )
-            exercises_raw = get_exercise_suggestions(cur, rec_raw.get("gym_rec"), today)
+            exercises_raw = get_exercise_suggestions(cur, rec_raw.get("gym_rec"), today, user_id)
 
         finally:
             conn.close()

@@ -124,44 +124,40 @@ class CheckinService:
     ) -> WorkoutReflectionSchema:
         result = await db.execute(text("""
             INSERT INTO workout_reflection (
-                user_id, entry_date, session_rpe, session_quality, notes
+                user_id, entry_date, session_rpe, session_quality, notes, load_feel
             ) VALUES (
-                :user_id, :entry_date, :session_rpe, :session_quality, :notes
+                :user_id, :entry_date, :session_rpe, :session_quality, :notes, :load_feel
             )
             ON CONFLICT (user_id, entry_date) DO UPDATE SET
                 session_rpe     = EXCLUDED.session_rpe,
                 session_quality = EXCLUDED.session_quality,
-                notes           = EXCLUDED.notes
-            RETURNING reflection_id, user_id, entry_date, session_rpe, session_quality, notes
+                notes           = EXCLUDED.notes,
+                load_feel       = EXCLUDED.load_feel
+            RETURNING reflection_id, user_id, entry_date, session_rpe, session_quality, notes, load_feel
         """), {
             "user_id":         user_id,
             "entry_date":      payload.entry_date,
             "session_rpe":     payload.session_rpe,
             "session_quality": payload.session_quality,
             "notes":           payload.notes,
+            "load_feel":       payload.load_feel,
         })
         await db.commit()
         row = result.fetchone()
-        return WorkoutReflectionSchema(
-            reflection_id=row.reflection_id,
-            user_id=row.user_id,
-            entry_date=row.entry_date,
-            session_rpe=row.session_rpe,
-            session_quality=row.session_quality,
-            notes=row.notes,
-        )
+        return self._map_reflection(row)
 
     async def get_reflection(
         self, db: AsyncSession, user_id: int, entry_date: date
     ) -> WorkoutReflectionSchema | None:
         result = await db.execute(text("""
-            SELECT reflection_id, user_id, entry_date, session_rpe, session_quality, notes
+            SELECT reflection_id, user_id, entry_date, session_rpe, session_quality, notes, load_feel
             FROM workout_reflection
             WHERE user_id = :user_id AND entry_date = :entry_date
         """), {"user_id": user_id, "entry_date": entry_date})
         row = result.fetchone()
-        if not row:
-            return None
+        return self._map_reflection(row) if row else None
+
+    def _map_reflection(self, row) -> WorkoutReflectionSchema:
         return WorkoutReflectionSchema(
             reflection_id=row.reflection_id,
             user_id=row.user_id,
@@ -169,6 +165,7 @@ class CheckinService:
             session_rpe=row.session_rpe,
             session_quality=row.session_quality,
             notes=row.notes,
+            load_feel=row.load_feel,
         )
 
     # ------------------------------------------------------------------
@@ -229,7 +226,7 @@ class CheckinService:
                 d.entry_date,
                 r.overall_feel, r.legs_feel, r.upper_body_feel, r.joint_feel,
                 r.injury_note, r.time_available, r.going_out_tonight,
-                wr.session_rpe, wr.session_quality, wr.notes AS reflection_notes,
+                wr.session_rpe, wr.session_quality, wr.load_feel, wr.notes AS reflection_notes,
                 je.content AS journal_note
             FROM (
                 SELECT entry_date FROM daily_readiness
@@ -262,6 +259,7 @@ class CheckinService:
                 going_out=row.going_out_tonight,
                 rpe=row.session_rpe,
                 session_quality=row.session_quality,
+                load_feel=row.load_feel,
                 reflection_notes=row.reflection_notes,
                 journal_note=row.journal_note,
             )

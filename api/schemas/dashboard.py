@@ -91,10 +91,16 @@ class WeatherSchema(BaseModel):
     wind: float | None          # m/s
 
 
+class SportLoadEntrySchema(BaseModel):
+    key:      str
+    label:    str
+    sessions: int
+    minutes:  int
+    km:       float
+
+
 class RecentLoadSchema(BaseModel):
-    run_km: float
-    bike_min: float
-    climb_sessions: int
+    by_sport: list[SportLoadEntrySchema]
 
 
 class DashboardSchema(BaseModel):

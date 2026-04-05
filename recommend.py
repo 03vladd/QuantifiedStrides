@@ -40,13 +40,13 @@ SPORT_META = {
 # DB queries
 # ---------------------------------------------------------------------------
 
-def get_readiness(cur, today):
+def get_readiness(cur, today, user_id=1):
     cur.execute("""
         SELECT overall_feel, legs_feel, upper_body_feel, joint_feel,
                injury_note, time_available, going_out_tonight
         FROM daily_readiness
-        WHERE user_id = 1 AND entry_date = %s
-    """, (today,))
+        WHERE user_id = %s AND entry_date = %s
+    """, (user_id, today,))
     row = cur.fetchone()
     if not row:
         return None
@@ -61,29 +61,38 @@ def get_readiness(cur, today):
     }
 
 
-def get_yesterdays_training(cur, yesterday):
+def get_yesterdays_training(cur, yesterday, user_id=1):
     """
     Returns a dict describing yesterday's training.
     Gym sessions take precedence over the Garmin strength_training entry.
+    Augmented with load_feel from workout_reflection (-2..+2) when available.
     """
+    # Fetch perceived load from yesterday's reflection (nullable)
+    cur.execute("""
+        SELECT load_feel FROM workout_reflection
+        WHERE user_id = %s AND entry_date = %s
+    """, (user_id, yesterday,))
+    lf_row = cur.fetchone()
+    load_feel = lf_row[0] if lf_row else None
+
     # Check strength log first (gives us upper/lower)
     cur.execute("""
         SELECT session_type FROM strength_sessions
-        WHERE user_id = 1 AND session_date = %s
-    """, (yesterday,))
+        WHERE user_id = %s AND session_date = %s
+    """, (user_id, yesterday,))
     row = cur.fetchone()
     if row:
-        return {"source": "gym", "session_type": row[0], "sport": None}
+        return {"source": "gym", "session_type": row[0], "sport": None, "load_feel": load_feel}
 
     # Check Garmin workouts (skip strength_training — no detail there)
     cur.execute("""
         SELECT sport, workout_type, training_volume, avg_heart_rate
         FROM workouts
-        WHERE user_id = 1 AND workout_date = %s
+        WHERE user_id = %s AND workout_date = %s
           AND sport != 'strength_training'
         ORDER BY start_time DESC
         LIMIT 1
-    """, (yesterday,))
+    """, (user_id, yesterday,))
     row = cur.fetchone()
     if row:
         meta = SPORT_META.get(row[0], {"label": row[0], "category": "other",
@@ -97,19 +106,20 @@ def get_yesterdays_training(cur, yesterday):
             "avg_hr":       row[3],
             "lower_load":   meta["lower_load"],
             "upper_load":   meta["upper_load"],
+            "load_feel":    load_feel,
         }
 
-    return {"source": "rest", "session_type": "rest"}
+    return {"source": "rest", "session_type": "rest", "load_feel": load_feel}
 
 
-def get_last_nights_sleep(cur, today):
+def get_last_nights_sleep(cur, today, user_id=1):
     # Garmin labels sleep by the morning you wake up, so today's date = last night's sleep
     cur.execute("""
         SELECT duration_minutes, sleep_score, hrv, rhr,
                hrv_status, body_battery_change
         FROM sleep_sessions
-        WHERE user_id = 1 AND sleep_date = %s
-    """, (today,))
+        WHERE user_id = %s AND sleep_date = %s
+    """, (user_id, today,))
     row = cur.fetchone()
     if not row:
         return None
@@ -123,19 +133,19 @@ def get_last_nights_sleep(cur, today):
     }
 
 
-def get_recent_load(cur, today, days=7):
-    """Running km and bike minutes over the last N days."""
+def get_recent_load(cur, today, days=7, user_id=1):
+    """Running km and bike minutes over the last N days (used internally by recommendation engine)."""
     since = today - timedelta(days=days)
     cur.execute("""
         SELECT sport, SUM(training_volume), SUM(
             EXTRACT(EPOCH FROM (end_time - start_time)) / 60
         )
         FROM workouts
-        WHERE user_id = 1
+        WHERE user_id = %s
           AND workout_date > %s AND workout_date < %s
           AND sport != 'strength_training'
         GROUP BY sport
-    """, (since, today))
+    """, (user_id, since, today))
     rows = cur.fetchall()
     load = {"run_km": 0.0, "bike_min": 0.0, "climb_sessions": 0}
     for sport, volume, minutes in rows:
@@ -146,6 +156,88 @@ def get_recent_load(cur, today, days=7):
         elif sport == "bouldering":
             load["climb_sessions"] += 1
     return load
+
+
+# Maps Garmin sport field values → user profile sport keys
+_GARMIN_TO_SPORT_KEY = {
+    "trail_running":      "trail_run",
+    "running":            "road_run",
+    "mountain_biking":    "xc_mtb",
+    "cycling":            "bike",
+    "road_biking":        "bike",
+    "indoor_cycling":     "bike",
+    "bouldering":         "climbing",
+    "climbing":           "climbing",
+    "skiing":             "ski",
+    "backcountry_skiing": "ski",
+    "resort_skiing":      "ski",
+    "snowboarding":       "snowboard",
+}
+
+_SPORT_KEY_LABELS = {
+    "trail_run":  "Trail Running",
+    "xc_mtb":     "XC MTB",
+    "climbing":   "Climbing",
+    "ski":        "Skiing",
+    "snowboard":  "Snowboarding",
+    "road_run":   "Road Running",
+    "bike":       "Road Cycling",
+}
+
+
+def get_recent_load_by_sport(cur, today, days=7, user_id=1):
+    """
+    Returns per-sport load for the last N days, keyed by the user's active sports.
+    Each entry: {key, label, sessions, minutes, km}
+    Ordered by user sport priority (highest first).
+    """
+    import json as _json
+
+    # Fetch user's primary sports
+    cur.execute("SELECT primary_sports FROM user_profile WHERE user_id = %s", (user_id,))
+    row = cur.fetchone()
+    user_sports = {}
+    if row and row[0]:
+        raw = row[0]
+        user_sports = _json.loads(raw) if isinstance(raw, str) else raw
+
+    since = today - timedelta(days=days)
+    cur.execute("""
+        SELECT sport,
+               COUNT(*),
+               SUM(training_volume),
+               SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 60)
+        FROM workouts
+        WHERE user_id = %s
+          AND workout_date > %s AND workout_date <= %s
+          AND sport != 'strength_training'
+        GROUP BY sport
+    """, (user_id, since, today))
+    rows = cur.fetchall()
+
+    # Accumulate by user sport key
+    accum = {}
+    for sport, sessions, volume, minutes in rows:
+        key = _GARMIN_TO_SPORT_KEY.get(sport)
+        if key and key in user_sports:
+            if key not in accum:
+                accum[key] = {"sessions": 0, "minutes": 0.0, "km": 0.0}
+            accum[key]["sessions"] += int(sessions or 0)
+            accum[key]["minutes"]  += float(minutes or 0)
+            accum[key]["km"]       += float(volume or 0) / 1000
+
+    # Return all active sports sorted by priority (highest first)
+    result = []
+    for key in sorted(user_sports, key=lambda k: -user_sports[k]):
+        data = accum.get(key, {"sessions": 0, "minutes": 0.0, "km": 0.0})
+        result.append({
+            "key":      key,
+            "label":    _SPORT_KEY_LABELS.get(key, key),
+            "sessions": data["sessions"],
+            "minutes":  round(data["minutes"]),
+            "km":       round(data["km"], 1),
+        })
+    return result
 
 
 def get_latest_weather(cur):
@@ -161,7 +253,7 @@ def get_latest_weather(cur):
     return {"temp": row[0], "rain": row[1], "wind": row[2]}
 
 
-def get_gym_analysis(cur, today):
+def get_gym_analysis(cur, today, user_id=1):
     """
     Fetches the last 2 upper + 2 lower sessions with exercise labels.
     Returns per-session CNS totals, movement pattern breakdown, and muscle coverage
@@ -172,7 +264,7 @@ def get_gym_analysis(cur, today):
             SELECT ss.session_id, ss.session_date, ss.session_type,
                    ROW_NUMBER() OVER (PARTITION BY ss.session_type ORDER BY ss.session_date DESC) AS rn
             FROM strength_sessions ss
-            WHERE ss.user_id = 1 AND ss.session_type IS NOT NULL
+            WHERE ss.user_id = %s AND ss.session_type IS NOT NULL
               AND ss.session_date < %s
         )
         SELECT r.session_date, r.session_type,
@@ -183,7 +275,7 @@ def get_gym_analysis(cur, today):
         LEFT JOIN exercises e ON e.name = se.name
         WHERE r.rn <= 2
         ORDER BY r.session_date DESC, se.exercise_order
-    """, (today,))
+    """, (user_id, today,))
     rows = cur.fetchall()
 
     from collections import defaultdict, Counter
@@ -222,7 +314,7 @@ def get_gym_analysis(cur, today):
 
 
 
-def get_last_performance(cur, name):
+def get_last_performance(cur, name, user_id=1):
     """
     Returns the sets from the most recent session for this exercise.
     Each row: (set_number, reps, duration_seconds, total_weight_kg,
@@ -236,14 +328,16 @@ def get_last_performance(cur, name):
         JOIN strength_exercises se ON st.exercise_id = se.exercise_id
         JOIN strength_sessions ss ON se.session_id = ss.session_id
         WHERE se.name = %s
+          AND ss.user_id = %s
           AND ss.session_date = (
               SELECT MAX(ss2.session_date)
               FROM strength_exercises se2
               JOIN strength_sessions ss2 ON se2.session_id = ss2.session_id
               WHERE se2.name = %s
+                AND ss2.user_id = %s
           )
         ORDER BY st.set_number
-    """, (name, name))
+    """, (name, user_id, name, user_id))
     rows = cur.fetchall()
     return rows if rows else None
 
@@ -380,7 +474,7 @@ ATHLETE_SPORTS = {
 }
 
 
-def get_muscle_importance(cur):
+def get_muscle_importance(cur, user_id=1):
     """
     Derives muscle importance from exercises table: for each muscle that appears
     as primary in any exercise, compute a weighted sport relevance score using
@@ -409,7 +503,7 @@ def get_muscle_importance(cur):
     return {m: totals[m] / counts[m] for m in totals}
 
 
-def get_weekly_muscle_frequency(cur, today):
+def get_weekly_muscle_frequency(cur, today, user_id=1):
     """
     Returns dict: muscle → number of gym sessions in the last 7 days
     where that muscle appeared as a primary muscle.
@@ -420,10 +514,10 @@ def get_weekly_muscle_frequency(cur, today):
         FROM strength_sessions ss
         JOIN strength_exercises se ON se.session_id = ss.session_id
         JOIN exercises e ON e.name = se.name
-        WHERE ss.user_id = 1
+        WHERE ss.user_id = %s
           AND ss.session_date >= %s AND ss.session_date < %s
           AND e.primary_muscles IS NOT NULL
-    """, (since, today))
+    """, (user_id, since, today))
     rows = cur.fetchall()
 
     freq = {}
@@ -449,7 +543,7 @@ _SESSION_MUSCLE_FILTER = {
 }
 
 
-def get_exercise_suggestions(cur, gym_rec, today):
+def get_exercise_suggestions(cur, gym_rec, today, user_id=1):
     """
     Selects 5 exercises for the recommended gym session.
     Filters by session type (upper/lower muscle region), uses deficit scoring
@@ -488,8 +582,8 @@ def get_exercise_suggestions(cur, gym_rec, today):
     ]
 
     # Muscle importance and weekly frequency for deficit scoring
-    importance      = get_muscle_importance(cur)
-    weekly_freq     = get_weekly_muscle_frequency(cur, today)
+    importance      = get_muscle_importance(cur, user_id)
+    weekly_freq     = get_weekly_muscle_frequency(cur, today, user_id)
     muscle_fresh    = get_muscle_freshness(cur, today)
     target_freq     = {m: max(1, round(score / 6)) for m, score in importance.items()}
 
@@ -588,7 +682,7 @@ def get_exercise_suggestions(cur, gym_rec, today):
 
     suggestions = []
     for name, pattern, qf, cns, bilateral, muscles, last_done, ct in selected:
-        last_perf = get_last_performance(cur, name)
+        last_perf = get_last_performance(cur, name, user_id)
         s = _build_set_suggestion(name, pattern, qf, bilateral, last_perf, is_light)
         s["pattern"]   = pattern
         s["quality"]   = qf
@@ -603,16 +697,16 @@ def get_exercise_suggestions(cur, gym_rec, today):
     return suggestions
 
 
-def get_consecutive_training_days(cur, today):
+def get_consecutive_training_days(cur, today, user_id=1):
     """How many days in a row has there been some training activity."""
     count = 0
     check = today - timedelta(days=1)
     for _ in range(14):
         cur.execute("""
-            SELECT 1 FROM workouts WHERE user_id = 1 AND workout_date = %s
+            SELECT 1 FROM workouts WHERE user_id = %s AND workout_date = %s
             UNION
-            SELECT 1 FROM strength_sessions WHERE user_id = 1 AND session_date = %s
-        """, (check, check))
+            SELECT 1 FROM strength_sessions WHERE user_id = %s AND session_date = %s
+        """, (user_id, check, user_id, check))
         if cur.fetchone():
             count += 1
             check -= timedelta(days=1)
@@ -698,6 +792,17 @@ _SESSION_TEMPLATES = {
 }
 
 
+def _gym_intensity_label(gym_rec: dict) -> str:
+    """Translate internal light/moderate/heavy into a meaningful display label for gym sessions."""
+    lvl = gym_rec.get("intensity", "moderate")
+    typ = gym_rec.get("session_type", "upper")
+    if lvl == "heavy":
+        return "Power focus" if typ == "lower" else "Push+Pull heavy"
+    if lvl == "light":
+        return "Stability focus" if typ == "lower" else "Movement quality"
+    return "Moderate"
+
+
 def _describe_gym_day(gym_type, gym_analysis, today, tsb=0):
     """
     Returns the session descriptor: intensity (heavy/light), focus patterns, label, why.
@@ -763,10 +868,17 @@ def _describe_gym_day(gym_type, gym_analysis, today, tsb=0):
 
 
 def _days_since(last_date, today):
-    """Returns number of days since last_date, or 99 if None."""
+    """Returns number of days since last_date, or None if never trained."""
     if last_date is None:
-        return 99
+        return None
     return (today - last_date).days
+
+
+def _fmt_days(d):
+    """Human-readable days-since string."""
+    if d is None:
+        return "never"
+    return f"{d}d ago"
 
 
 def _pick_gym_type(gym_analysis, today):
@@ -780,15 +892,17 @@ def _pick_gym_type(gym_analysis, today):
     days_upper = _days_since(last_upper_date, today)
     days_lower = _days_since(last_lower_date, today)
 
-    # Alternate: do whichever was done longer ago
-    if days_upper < days_lower:
+    # Alternate: do whichever was done longer ago (None = never trained = treat as max)
+    eff_upper = days_upper if days_upper is not None else 9999
+    eff_lower = days_lower if days_lower is not None else 9999
+    if eff_upper < eff_lower:
         return "lower"
-    elif days_lower < days_upper:
+    elif eff_lower < eff_upper:
         return "upper"
     return "upper"  # tie-break: upper
 
 
-def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive_days, gym_analysis, today, tl_metrics):
+def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive_days, gym_analysis, today, tl_metrics, user_id=1):
     """
     Core decision logic. Returns a recommendation dict.
     """
@@ -821,6 +935,18 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
     notes = []
     avoid = []
 
+    # ── Perceived load feedback from yesterday ───────────────────────────────
+    load_feel = yesterday.get("load_feel")
+    if load_feel is not None:
+        if load_feel <= -2:
+            notes.append("Yesterday felt much too easy — push harder today, the engine will step up your load")
+        elif load_feel == -1:
+            notes.append("Yesterday felt slightly easy — room to increase intensity today")
+        elif load_feel == 1:
+            notes.append("Yesterday was slightly taxing — keep today comfortable, don't compound fatigue")
+        elif load_feel >= 2:
+            notes.append("Yesterday was too hard — back off intensity today to allow proper recovery")
+
     # Sleep quality warning
     if sleep:
         if sleep["score"] and sleep["score"] < 60:
@@ -850,12 +976,12 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
     if yesterday_type == "lower":
         avoid.append("Running (lower body recovery)")
         # Upper gym is fresh candidate — check if overdue
-        if time_available != "short" and "gym_upper" not in blocks and days_since_upper >= 2:
+        if time_available != "short" and "gym_upper" not in blocks and (days_since_upper is None or days_since_upper >= 2):
             gym_rec = _describe_gym_day("upper", gym_analysis, today, tsb)
             primary  = f"Upper Gym — {gym_rec['focus_label']}"
             intensity = gym_rec["intensity"].capitalize()
             duration  = "60-90 min"
-            why = gym_rec["why"] + f" (last upper: {days_since_upper}d ago)"
+            why = gym_rec["why"] + f" (last upper: {_fmt_days(days_since_upper)})"
         elif time_available == "short":
             primary = "Easy Z2 Stationary Bike (20-30 min)"
             intensity = "Z2"
@@ -871,12 +997,12 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
     elif yesterday_type == "upper":
         avoid.append("Climbing (upper body/joint recovery)")
         # Lower gym is fresh candidate — check if overdue
-        if time_available != "short" and "gym_lower" not in blocks and days_since_lower >= 2:
+        if time_available != "short" and "gym_lower" not in blocks and (days_since_lower is None or days_since_lower >= 2):
             gym_rec = _describe_gym_day("lower", gym_analysis, today, tsb)
             primary  = f"Lower Gym — {gym_rec['focus_label']}"
             intensity = gym_rec["intensity"].capitalize()
             duration  = "60-90 min"
-            why = gym_rec["why"] + f" (last lower: {days_since_lower}d ago)"
+            why = gym_rec["why"] + f" (last lower: {_fmt_days(days_since_lower)})"
         elif time_available == "short":
             primary = "Easy Z2 Stationary Bike (20-30 min)"
             intensity = "Z2"
@@ -899,7 +1025,7 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
         gym_type_candidate = _pick_gym_type(gym_analysis, today)
         gym_block_key = f"gym_{gym_type_candidate}"
         days_since_gym = days_since_upper if gym_type_candidate == "upper" else days_since_lower
-        gym_is_priority = days_since_gym >= 2 and gym_block_key not in blocks
+        gym_is_priority = (days_since_gym is None or days_since_gym >= 2) and gym_block_key not in blocks
 
         if time_available == "short":
             primary = "Easy Z2 Stationary Bike (30 min)"
@@ -913,7 +1039,7 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
                 primary  = f"{gym_type_candidate.capitalize()} Gym — {gym_rec['focus_label']}"
                 intensity = gym_rec["intensity"].capitalize()
                 duration  = "60-90 min"
-                why = gym_rec["why"] + f" (last {gym_type_candidate}: {days_since_gym}d ago)"
+                why = gym_rec["why"] + f" (last {gym_type_candidate}: {_fmt_days(days_since_gym)})"
             elif "climb" not in blocks and readiness and readiness["upper"] and readiness["upper"] >= 7:
                 primary = "Bouldering (technique focus)"
                 intensity = "Moderate"
@@ -936,7 +1062,7 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
                 primary  = f"{gym_type_candidate.capitalize()} Gym — {gym_rec['focus_label']}"
                 intensity = gym_rec["intensity"].capitalize()
                 duration  = "75-105 min"
-                why = gym_rec["why"] + f" (last {gym_type_candidate}: {days_since_gym}d ago)"
+                why = gym_rec["why"] + f" (last {gym_type_candidate}: {_fmt_days(days_since_gym)})"
             elif "run" not in blocks and "trail_run" not in blocks:
                 primary = "Road Run or Trail Run (easy pace)"
                 intensity = "Z2"
@@ -952,6 +1078,21 @@ def build_recommendation(readiness, yesterday, sleep, weather, load, consecutive
                 intensity = "Z2"
                 duration = "60-90 min"
                 why = "Fresh day, long window — solid base building ride."
+
+    # ── Adjust gym intensity based on yesterday's perceived load ────────────
+    if gym_rec and load_feel is not None:
+        if load_feel <= -1 and gym_rec.get("intensity") == "light":
+            gym_rec["intensity"]   = "moderate"
+            gym_rec["focus_label"] = gym_rec.get("focus_label", "").replace("Light", "Moderate")
+            gym_rec["why"]         = gym_rec.get("why", "") + " (bumped from light — yesterday felt too easy)"
+        elif load_feel >= 1 and gym_rec.get("intensity") == "heavy":
+            gym_rec["intensity"]   = "moderate"
+            gym_rec["focus_label"] = gym_rec.get("focus_label", "").replace("Heavy", "Moderate")
+            gym_rec["why"]         = gym_rec.get("why", "") + " (dropped from heavy — yesterday was already taxing)"
+
+    # ── Use descriptive labels for gym sessions ──────────────────────────────
+    if gym_rec:
+        intensity = _gym_intensity_label(gym_rec)
 
     return {
         "primary":   primary,
@@ -1104,6 +1245,7 @@ def parse_date(s):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", help="Date to recommend for (DD.MM or DD.MM.YYYY)")
+    parser.add_argument("--user-id", type=int, default=1, help="User ID (default: 1)")
     args = parser.parse_args()
 
     today = parse_date(args.date) if args.date else date.today()
@@ -1111,18 +1253,19 @@ def main():
         print("Invalid date.")
         sys.exit(1)
 
+    user_id   = args.user_id
     yesterday = today - timedelta(days=1)
 
     conn = get_connection()
     cur  = conn.cursor()
 
-    readiness         = get_readiness(cur, today)
-    yesterday_session = get_yesterdays_training(cur, yesterday)
-    sleep             = get_last_nights_sleep(cur, today)
+    readiness         = get_readiness(cur, today, user_id)
+    yesterday_session = get_yesterdays_training(cur, yesterday, user_id)
+    sleep             = get_last_nights_sleep(cur, today, user_id)
     weather           = get_latest_weather(cur)
-    load              = get_recent_load(cur, today)
-    consecutive       = get_consecutive_training_days(cur, today)
-    gym_analysis      = get_gym_analysis(cur, today)
+    load              = get_recent_load(cur, today, user_id=user_id)
+    consecutive       = get_consecutive_training_days(cur, today, user_id)
+    gym_analysis      = get_gym_analysis(cur, today, user_id)
     tl_metrics        = get_metrics(cur, today)
     hrv_status        = get_hrv_status(cur, today)
     active_alerts     = get_alerts(cur, today, tl_metrics, hrv_status, readiness)
@@ -1135,12 +1278,12 @@ def main():
         print("Run:  python3 checkin.py\n")
         sys.exit(0)
 
-    rec = build_recommendation(readiness, yesterday_session, sleep, weather, load, consecutive, gym_analysis, today, tl_metrics)
+    rec = build_recommendation(readiness, yesterday_session, sleep, weather, load, consecutive, gym_analysis, today, tl_metrics, user_id)
 
     # Fetch exercise suggestions after rec is built (needs gym_rec from rec)
     conn2 = get_connection()
     cur2  = conn2.cursor()
-    exercises = get_exercise_suggestions(cur2, rec.get("gym_rec"), today)
+    exercises = get_exercise_suggestions(cur2, rec.get("gym_rec"), today, user_id)
     cur2.close()
     conn2.close()
 

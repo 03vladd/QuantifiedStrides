@@ -165,6 +165,7 @@ CREATE TABLE workout_reflection (
     session_rpe     INT CHECK (session_rpe BETWEEN 1 AND 10),
     session_quality INT CHECK (session_quality BETWEEN 1 AND 10),
     notes           TEXT,
+    load_feel       SMALLINT CHECK (load_feel BETWEEN -2 AND 2),  -- -2=much too easy, 0=just right, 2=too hard
     UNIQUE (user_id, entry_date)
 );
 
